@@ -137,11 +137,6 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
   mk->imesh_instance()->createTag(GLOBAL_ID_TAG_NAME,1,iBase_INTEGER,mesh_id_tag);
 
   create_entity_sets(mk, root, entmap);
-  //get the vertices 
-  ents.clear();
-  mk->igeom_instance()->getEntities(root,iBase_VERTEX, ents);
-  std::cout << "There are " << ents.size() << " vertices." << std::endl;
-
 
   //create a map iterator for the ent_sets
   std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it;
@@ -154,6 +149,7 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
  
       //get the mesh set handle from the map
       iBase_EntitySetHandle msh=map_it->second;
+
       //get the vertex coordinates
       double x,y,z;
 
@@ -166,21 +162,21 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
       mk->imesh_instance()->addEntToSet(vertex,msh);
      
     }
-    /*
-  //now get the curves
-  ents.clear();
-  mk->igeom_instance()->getEntities(root,iBase_EDGE,ents);
-  std::cout << "There are " << ents.size() << " ref edges." << std::endl;
   
   //loop through the reference edges
-  for(unsigned int i=0; i<ents.size(); i++)
+  for(map_it=entmap[1].begin(); map_it!=entmap[1].end(); ++map_it)
     {
 
-  
+        //get the geom entity handle from the map
+      iBase_EntityHandle gh = map_it->first;
+ 
+      //get the mesh set handle from the map
+      iBase_EntitySetHandle msh=map_it->second;
+
       //get the facets for this curve/ ref_edge
       std::vector<double> pnts;
       std::vector<int> conn;
-      mk->igeom_instance()->getFacets(ents[i],faceting_tol,pnts,conn);
+      mk->igeom_instance()->getFacets(gh,faceting_tol,pnts,conn);
       std::cout << "Points returned from getFacets: " << pnts.size()/3 << std::endl;
       std::cout << "Facets returned from getFacets: " << conn.size() << std::endl;
       //create vector for keeping track of the vertices
@@ -210,13 +206,11 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
 	}
  
       //add verticess and edges to the entity set
-      mk->imesh_instance()->addEntArrToSet(&verts[0],verts.size(),h);
-      mk->imesh_instance()->addEntArrToSet(&edges[0],edges.size(),h);
+      mk->imesh_instance()->addEntArrToSet(&verts[0],verts.size(),msh);
+      mk->imesh_instance()->addEntArrToSet(&edges[0],edges.size(),msh);
 
-      //create the reference to this meshset in the map
-      entmap[1][ents[i]]=h;
     }
-
+  /*
   //get all the faces
   ents.clear();
   mk->igeom_instance()->getEntities(root,iBase_FACE,ents);
