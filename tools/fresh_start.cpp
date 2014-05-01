@@ -53,6 +53,10 @@ using namespace MeshKit;
   iBase_TagHandle category_tag;
   mk->imesh_instance()->createTag(CATEGORY_TAG_NAME,CATEGORY_TAG_SIZE,iBase_BYTES, category_tag);
 
+    //establish the geom categories
+  char geom_categories[][CATEGORY_TAG_SIZE] = 
+              {"Vertex\0", "Curve\0", "Surface\0", "Volume\0", "Group\0"};
+
   //create iMesh tag for geom_dim
   iBase_TagHandle geom_tag; 
   mk->imesh_instance()->createTag(GEOM_DIMENSION_TAG_NAME,1,iBase_INTEGER, geom_tag);
@@ -85,6 +89,9 @@ using namespace MeshKit;
       mk->igeom_instance()->getIntData(ents[i],id_tag,id);
       mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
       
+      //set the category tag
+      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[0]);
+
       //get the vertex coordinates
       double x,y,z;
       mk->igeom_instance()->getVtxCoord(ents[i],x,y,z);
@@ -121,6 +128,9 @@ using namespace MeshKit;
       int id; 
       mk->igeom_instance()->getIntData(ents[i],id_tag,id);
       mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
+
+      //set the category tag
+      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[1]);
 
       //get the facets for this curve/ ref_edge
       std::vector<double> pnts;
@@ -182,6 +192,9 @@ using namespace MeshKit;
       mk->igeom_instance()->getIntData(ents[i],id_tag,id);
       mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
 
+      //set the category tag
+      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[2]);
+
       //get the facets for this surface/ ref_face
       std::vector<double> pnts;
       std::vector<int> conn;
@@ -241,48 +254,3 @@ using namespace MeshKit;
   return 0;
 }
 
-
-  /*
-  //print out entity dimensions
-  iBase_EntityType type;
-  for(unsigned int i=0; i<ents.size() ;i ++)
-    {
-      mk->igeom_instance()->getEntType(ents[i],type);
-      std::cout << "This entity is of type: " << type << std::endl;
-      std::vector<iBase_TagHandle> tgs;
-      mk->igeom_instance()->getAllTags(ents[i],tgs);
-      std::cout<< "This entity has " << tgs.size() << " tags." << std::endl;
-
-      if (type ==0)
-	{ 
-	  std::cout << "-------------------------" << std::endl;
-	  std::cout << "VERTEX " << i << std::endl;
-	  std::cout << "-------------------------" << std::endl;
-          double x,y,z;
-	  mk->igeom_instance()->getVtxCoord(ents[i],x,y,z);
-	  std::cout << "Position of the vertex is: " << x << " " << y << " " << z <<  std::endl;
-	  std::vector<iBase_TagHandle> tags;
-          mk->igeom_instance()->getAllTags(ents[i],tags);
-	  std::cout << "This vertex has " << tags.size() << " tags" << std::endl;
-	  std::cout << "-------------------------" << std::endl;
-	  std::cout << "Tag 1:" << std::endl;
-	  std::cout << "-------------------------" << std::endl;
-	  std::string name;
-          mk->igeom_instance()->getTagName(tags[0],name);
-	  std::cout << "Name: " << name << std::endl;
-	  int name_value[NAME_TAG_SIZE];
-          mk->igeom_instance()->getData(ents[i],tags[0], name_value);
-	  std::cout << "Value: " << name_value[0] << std::endl;
-
-  	  std::cout << "-------------------------" << std::endl;
-	  std::cout << "Tag 2:" << std::endl;
-	  std::cout << "-------------------------" << std::endl;
-          mk->igeom_instance()->getTagName(tags[1],name);
-	  std::cout << "Name: " << name << std::endl;
-          int id;
-          mk->igeom_instance()->getIntData(ents[i],tags[1],id);
-	  std::cout << "Value: " << id << std::endl;
-
-	}
-    }
-  */
