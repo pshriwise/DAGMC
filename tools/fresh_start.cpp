@@ -79,6 +79,39 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
     }
 }
 
+void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::EntitySetHandle> (&entmap)[5])
+{
+
+  //create iterator for the map
+  std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it;
+
+  //establish the types of entities to get for each dim 
+  iBase_EntityType types[4]={iBase_VERTEX,iBase_EDGE,iBase_FACE,iBase_REGION};
+
+  for(unsigned int dim = 3; dim>1; dim--)
+    {
+      //CREATE SET-SET RELATIONS
+      for(map_it=entmap[dim].begin(); map_it!=entmap[dim].end(); ++map_it)
+        {
+
+          // get the meshset for the this dimension
+          iBase_EntitySetHandle dim_set= map_it->second;
+
+          // get child entitties of the current dim entitiy
+          std::vector<iBase_EntityHandle> lower_ents;
+          mk_iface->igeom_instance()->getEntAdj(map_it->first,types[dim-1],lower_ents);
+
+          for(unsigned int i=0; i<lower_ents.size(); i++)
+            {
+              //add the surface meshset to the vol meshset
+              mk_iface->imesh_instance()->addPrntChld(dim_set,entmap[dim-1][lower_ents[i]]);
+            }
+    
+        }
+    }
+}
+
+
 
  int main(int argc, char **argv)
 {
@@ -268,11 +301,14 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
 
 
   //CREATE SET-SET RELATIONS
-  for(map_it=entmap[3].begin(); map_it!=entmap[3].end(); ++map_it)
+  create_topology(mk, entmap);
+
+  /* 
+ for(map_it=entmap[3].begin(); map_it!=entmap[3].end(); ++map_it)
     {
 
       // get the meshset for the volume
-      iBase_EntitySetHandle vol_mset= map_it->second;
+      iBase_EntitySetHandle mset = map_it->second;
 
       // get child faces of the volumes
       std::vector<iBase_EntityHandle> faces;
@@ -285,11 +321,11 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
           surfs.push_back(entmap[2][faces[i]]);
 
           //add the surface meshset to the vol meshset
-          mk->imesh_instance()->addPrntChld(entmap[2][faces[i]],vol_mset);
+          mk->imesh_instance()->addPrntChld(entmap[2][faces[i]],mset);
 	}
     
     }
-
+  */
   //check how many curves are in the file
   std::vector<iBase_EntityHandle> all_faces;
   mk->igeom_instance()->getEntities(mk->igeom_instance()->getRootSet(),iBase_FACE,all_faces);
@@ -307,40 +343,4 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
   return 0;
 }
 
-
-void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::EntitySetHandle> (&entmap)[5])
-{
-
-  //create iterator for the map
-  std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it;
-
-  //establish the types of entities to get for each dim 
-  iBase_EntityType types[4]={iBase_VERTEX,iBase_EDGE,iBase_FACE,iBase_REGION};
-
-  for(unsigned int dim = 3; dim>1; dim--)
-    {
-      //CREATE SET-SET RELATIONS
-      for(map_it=entmap[dim].begin(); map_it!=entmap[dim].end(); ++map_it)
-        {
-
-          // get the meshset for the volume
-          iBase_EntitySetHandle dim_set= map_it->second;
-
-          // get child faces of the volumes
-          std::vector<iBase_EntityHandle> lower_ents;
-          mk_iface->igeom_instance()->getEntAdj(map_it->first,types[dim-1],lower_ents);
-
-          std::vector<iBase_EntitySetHandle> lower_sets;
-          for(unsigned int i=0; i<lower_ents.size(); i++)
-            {
-              //get the corresponding mesh surface sets
-              lower_sets.push_back(entmap[dim-1][lower_ents[i]]);
-
-              //add the surface meshset to the vol meshset
-              mk_iface->imesh_instance()->addPrntChld(entmap[dim-1][lower_ents[i]],dim_set);
-            }
-    
-        }
-    }
-}
 
