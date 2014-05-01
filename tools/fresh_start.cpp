@@ -210,21 +210,20 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
       mk->imesh_instance()->addEntArrToSet(&edges[0],edges.size(),msh);
 
     }
-  /*
-  //get all the faces
-  ents.clear();
-  mk->igeom_instance()->getEntities(root,iBase_FACE,ents);
-  std::cout << "There are " << ents.size() << " faces." << std::endl;
  
   //loop over all the faces
-  for(unsigned int i=0; i<ents.size(); i++)
+  for(map_it=entmap[2].begin(); map_it!=entmap[2].end(); ++map_it)
     {
-
+        //get the geom entity handle from the map
+      iBase_EntityHandle gh = map_it->first;
+ 
+      //get the mesh set handle from the map
+      iBase_EntitySetHandle msh=map_it->second;
 
       //get the facets for this surface/ ref_face
       std::vector<double> pnts;
       std::vector<int> conn;
-      mk->igeom_instance()->getFacets(ents[i],faceting_tol,pnts,conn);
+      mk->igeom_instance()->getFacets(gh,faceting_tol,pnts,conn);
       std::cout << "Triangles returned from getFacets: " << pnts.size()/3 << std::endl;
       std::cout << "Facets returned from getFacets: " << conn.size()/3 << std::endl;
   
@@ -263,18 +262,12 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
       std::cout << "Created " << tris.size() << " triangles" << std::endl;
 
       //add verticess and edges to the entity set
-      mk->imesh_instance()->addEntArrToSet(&verts[0],verts.size(),h);
-      mk->imesh_instance()->addEntArrToSet(&tris[0],tris.size(),h);
-
-      //create the reference to this meshset in the map
-      entmap[2][ents[i]]=h;
+      mk->imesh_instance()->addEntArrToSet(&verts[0],verts.size(),msh);
+      mk->imesh_instance()->addEntArrToSet(&tris[0],tris.size(),msh);
     }
-  */
 
   //write the file
   mk->imesh_instance()->save(root,"cyl.h5m");
-
-  
 
   std::cout << "Success!" << std::endl;
   return 0;
