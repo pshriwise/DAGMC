@@ -87,7 +87,7 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
   mk = new MKCore(); // start up MK
 
   // Load the geometry file
-  mk->igeom_instance()->load("cyl_groups.sat");
+  mk->igeom_instance()->load("cylcube.sat");
 
   //get the igeom rootset
   iBase_EntitySetHandle root = mk->igeom_instance()->getRootSet();
@@ -266,10 +266,49 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
       mk->imesh_instance()->addEntArrToSet(&tris[0],tris.size(),msh);
     }
 
+
+  //CREATE SET-SET RELATIONS
+  for(map_it=entmap[3].begin(); map_it!=entmap[3].end(); ++map_it)
+    {
+
+      // get the meshset for the volume
+      iBase_EntitySetHandle vol_mset= map_it->second;
+
+      // get child faces of the volumes
+      std::vector<iBase_EntityHandle> faces;
+      mk->igeom_instance()->getEntAdj(map_it->first,iBase_FACE,faces);
+
+      std::vector<iBase_EntitySetHandle> surfs;
+      for(unsigned int i=0; i<faces.size(); i++)
+	{
+          //get the corresponding mesh surface sets
+          surfs.push_back(entmap[2][faces[i]]);
+
+          //add the surface meshset to the vol meshset
+          mk->imesh_instance()->addPrntChld(entmap[2][faces[i]],vol_mset);
+	}
+    
+    }
+
+  //check how many curves are in the file
+  std::vector<iBase_EntityHandle> all_faces;
+  mk->igeom_instance()->getEntities(mk->igeom_instance()->getRootSet(),iBase_FACE,all_faces);
+  std::cout << "There are " << all_faces.size() << " faces in the model." << std::endl;
+
+  std::vector<iBase_EntityHandle> adj_faces;
+  map_it = entmap[3].begin();
+  mk->igeom_instance()->getEntAdj(map_it->first, iBase_FACE, adj_faces);
+  std::cout << adj_faces.size() << " faces are adjacent to this volume." << std::endl;
+
   //write the file
-  mk->imesh_instance()->save(root,"cyl.h5m");
+  mk->imesh_instance()->save(root,"cylcube.h5m");
 
   std::cout << "Success!" << std::endl;
   return 0;
 }
 
+
+void create_topology()
+{
+
+}
