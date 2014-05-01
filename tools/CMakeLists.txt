@@ -27,7 +27,9 @@ set(LIBRARIES ${IGEOM_LIB}/libiGeom.so ${IMESH_LIB}/libiMesh.so ${IREL_LIB}/libi
 
 set(CMAKE_INSTALL_PREFIX .)
 add_executable(read_cgm topo_n_tags.cpp)
+add_executable(fresh fresh_start.cpp)
 target_link_libraries(read_cgm ${LIBRARIES})
+target_link_libraries(fresh ${LIBRARIES})
 
 install(TARGETS read_cgm DESTINATION .)
 

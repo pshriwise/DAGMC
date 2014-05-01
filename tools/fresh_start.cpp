@@ -127,7 +127,7 @@ using namespace MeshKit;
       std::vector<int> conn;
       mk->igeom_instance()->getFacets(ents[i],faceting_tol,pnts,conn);
       std::cout << "Points returned from getFacets: " << pnts.size()/3 << std::endl;
-
+      std::cout << "Facets returned from getFacets: " << conn.size() << std::endl;
       //create vector for keeping track of the vertices
       std::vector<iBase_EntityHandle> verts;
 
@@ -186,7 +186,8 @@ using namespace MeshKit;
       std::vector<double> pnts;
       std::vector<int> conn;
       mk->igeom_instance()->getFacets(ents[i],faceting_tol,pnts,conn);
-
+      std::cout << "Triangles returned from getFacets: " << pnts.size()/3 << std::endl;
+      std::cout << "Facets returned from getFacets: " << conn.size()/3 << std::endl;
   
       //create vector for keeping track of the vertices
       std::vector<iBase_EntityHandle> verts;
@@ -194,6 +195,7 @@ using namespace MeshKit;
       // loop over the facet points
       for(unsigned int j=0; j<pnts.size(); j+=3)
 	{
+
 	  //create a new vertex handle 
           iBase_EntityHandle v;
           mk->imesh_instance()->createVtx(pnts[j],pnts[j+1],pnts[j+2],v);
@@ -202,20 +204,28 @@ using namespace MeshKit;
       
       //vector for keeping track of the triangles
       std::vector<iBase_EntityHandle> tris;
-      //loop over the verts and create a triangle for every three verts
-      
-      for(unsigned int j=0; j<verts.size()-2; j+=3)
+
+      //loop over the connectivity
+      for(unsigned int j=0; j<conn.size()-2; j+=3)
 	{
+          //get the appropriate points for a triangle and add them to a vector
+	  std::vector<iBase_EntityHandle> tri_verts; 
+          tri_verts.push_back(verts[conn[j]]);
+          tri_verts.push_back(verts[conn[j+1]]);
+          tri_verts.push_back(verts[conn[j+2]]);
+
 	  //create a new triangle handle
           iBase_EntityHandle t; 
-          mk->imesh_instance()->createEnt(iMesh_TRIANGLE, &verts[j],3,t);
+          mk->imesh_instance()->createEnt(iMesh_TRIANGLE, &tri_verts[0],3,t);
+          tri_verts.clear();
 	  tris.push_back(t);
+
         }
       std::cout << "Created " << tris.size() << " triangles" << std::endl;
 
       //add verticess and edges to the entity set
       mk->imesh_instance()->addEntArrToSet(&verts[0],verts.size(),h);
-      mk->imesh_instance()->addEntArrToSet(&trisx[0],tris.size(),h);
+      mk->imesh_instance()->addEntArrToSet(&tris[0],tris.size(),h);
 
       //create the reference to this meshset in the map
       entmap[2][ents[i]]=h;
