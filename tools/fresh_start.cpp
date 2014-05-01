@@ -14,6 +14,72 @@
 using namespace MeshKit;
 
 
+void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::map<iGeom::EntityHandle,iMesh::EntitySetHandle> (&entmap)[5])
+{
+  //establish the geom categories
+  char geom_categories[][CATEGORY_TAG_SIZE] = 
+              {"Vertex\0", "Curve\0", "Surface\0", "Volume\0", "Group\0"};
+
+  //establish the types of entities to get for each dim 
+  iBase_EntityType types[4]={iBase_VERTEX,iBase_EDGE,iBase_FACE,iBase_REGION};
+
+  //create iMesh tag for categories
+  iBase_TagHandle category_tag;
+  mk_iface->imesh_instance()->createTag(CATEGORY_TAG_NAME,CATEGORY_TAG_SIZE,iBase_BYTES, category_tag);
+
+  //create iMesh tag for geom_dim
+  iBase_TagHandle geom_tag; 
+  mk_iface->imesh_instance()->createTag(GEOM_DIMENSION_TAG_NAME,1,iBase_INTEGER, geom_tag);
+
+  //get the iGeom handle for the global_id
+  iBase_TagHandle id_tag;
+  mk_iface->igeom_instance()->getTagHandle(GLOBAL_ID_TAG_NAME,id_tag);
+
+  //create an id tag for the meshsets
+  iBase_TagHandle mesh_id_tag;
+  mk_iface->imesh_instance()->createTag(GLOBAL_ID_TAG_NAME,1,iBase_INTEGER,mesh_id_tag);
+
+
+  std::vector<iBase_EntityHandle> ent_list;
+  for(unsigned int dim=0; dim<4; dim++)
+    {
+      //remove previous Entities from list
+      ent_list.clear();
+      //get the geom entities for this dimension
+      mk_iface->igeom_instance()->getEntities(root_set,types[dim],ent_list);
+
+      //loop over entities in this dimension
+      for(unsigned int i=0; i<ent_list.size(); i++)
+	{
+
+          //create a new meshset
+          iMesh::EntitySetHandle h;
+          mk_iface->imesh_instance()->createEntSet(false, h);
+
+          //ADD TAGS
+
+          //set the geom_dim tag
+          mk_iface->imesh_instance()->setEntSetIntData(h,geom_tag,dim);
+
+          //set the global id tag
+          int id; 
+          mk_iface->igeom_instance()->getIntData(ent_list[i],id_tag,id);
+          mk_iface->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
+
+          //set the category tag
+          mk_iface->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[dim]);
+
+          //create the reference to this meshset in the map
+          entmap[dim][ent_list[i]]=h;
+
+
+	}
+
+
+    }
+}
+
+
  int main(int argc, char **argv)
 {
 
@@ -39,7 +105,7 @@ using namespace MeshKit;
   iBase_EntitySetHandle file_set;
   mk->imesh_instance()->createEntSet(false,file_set);
   mk->imesh_instance()->setEntSetDblData(file_set,facet_tol_tag,faceting_tol);
-
+  mk->imesh_instance()->setEntSetDblData(file_set,geom_resabs_tag,geom_resabs);
 
   //create a map to hold relations of geom entities to meshsets
   std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>entmap[5];
@@ -53,9 +119,10 @@ using namespace MeshKit;
   iBase_TagHandle category_tag;
   mk->imesh_instance()->createTag(CATEGORY_TAG_NAME,CATEGORY_TAG_SIZE,iBase_BYTES, category_tag);
 
-    //establish the geom categories
+  //establish the geom categories
   char geom_categories[][CATEGORY_TAG_SIZE] = 
               {"Vertex\0", "Curve\0", "Surface\0", "Volume\0", "Group\0"};
+
 
   //create iMesh tag for geom_dim
   iBase_TagHandle geom_tag; 
@@ -69,69 +136,47 @@ using namespace MeshKit;
   iBase_TagHandle mesh_id_tag;
   mk->imesh_instance()->createTag(GLOBAL_ID_TAG_NAME,1,iBase_INTEGER,mesh_id_tag);
 
+  create_entity_sets(mk, root, entmap);
   //get the vertices 
   ents.clear();
   mk->igeom_instance()->getEntities(root,iBase_VERTEX, ents);
   std::cout << "There are " << ents.size() << " vertices." << std::endl;
 
-  //loop over all vertices
-  for(unsigned int i=0; i<ents.size(); i++)
+
+  //create a map iterator for the ent_sets
+  std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it;
+
+  //loop over the vertex entities
+  for(map_it = entmap[0].begin(); map_it != entmap[0].end(); ++map_it)
     {
-      //create a new meshset
-      iMesh::EntitySetHandle h;
-      mk->imesh_instance()->createEntSet(false, h);
-
-      //set the geom_dim tag
-      mk->imesh_instance()->setEntSetIntData(h,geom_tag,0);
-
-      //set the global id tag
-      int id; 
-      mk->igeom_instance()->getIntData(ents[i],id_tag,id);
-      mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
-      
-      //set the category tag
-      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[0]);
-
+      //get the geom entity handle from the map
+      iBase_EntityHandle gh = map_it->first;
+ 
+      //get the mesh set handle from the map
+      iBase_EntitySetHandle msh=map_it->second;
       //get the vertex coordinates
       double x,y,z;
-      mk->igeom_instance()->getVtxCoord(ents[i],x,y,z);
+
+      mk->igeom_instance()->getVtxCoord(gh,x,y,z);
       //create a new mesh vertex 
       iBase_EntityHandle vertex;
       mk->imesh_instance()->createVtx(x,y,z,vertex);
 
       // add this vertex to the new meshset
-      mk->imesh_instance()->addEntToSet(vertex,h);
+      mk->imesh_instance()->addEntToSet(vertex,msh);
      
-      //create the reference to this meshset in the map
-      entmap[0][ents[i]]=h;
-
     }
-  
-
+    /*
   //now get the curves
   ents.clear();
   mk->igeom_instance()->getEntities(root,iBase_EDGE,ents);
   std::cout << "There are " << ents.size() << " ref edges." << std::endl;
-
+  
   //loop through the reference edges
   for(unsigned int i=0; i<ents.size(); i++)
     {
 
-      //create a new meshset
-      iMesh::EntitySetHandle h;
-      mk->imesh_instance()->createEntSet(false, h);
-
-      //set the geom_dim tag
-      mk->imesh_instance()->setEntSetIntData(h,geom_tag,1);
-
-      //set the global id tag
-      int id; 
-      mk->igeom_instance()->getIntData(ents[i],id_tag,id);
-      mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
-
-      //set the category tag
-      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[1]);
-
+  
       //get the facets for this curve/ ref_edge
       std::vector<double> pnts;
       std::vector<int> conn;
@@ -180,20 +225,7 @@ using namespace MeshKit;
   //loop over all the faces
   for(unsigned int i=0; i<ents.size(); i++)
     {
-        //create a new meshset
-      iMesh::EntitySetHandle h;
-      mk->imesh_instance()->createEntSet(false, h);
 
-      //set the geom_dim tag
-      mk->imesh_instance()->setEntSetIntData(h,geom_tag,2);
-
-      //set the global id tag
-      int id; 
-      mk->igeom_instance()->getIntData(ents[i],id_tag,id);
-      mk->imesh_instance()->setEntSetIntData(h,mesh_id_tag,id);
-
-      //set the category tag
-      mk->imesh_instance()->setEntSetData(h, category_tag, &geom_categories[2]);
 
       //get the facets for this surface/ ref_face
       std::vector<double> pnts;
@@ -243,7 +275,7 @@ using namespace MeshKit;
       //create the reference to this meshset in the map
       entmap[2][ents[i]]=h;
     }
-
+  */
 
   //write the file
   mk->imesh_instance()->save(root,"cyl.h5m");
