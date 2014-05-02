@@ -303,29 +303,8 @@ void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::Enti
   //CREATE SET-SET RELATIONS
   create_topology(mk, entmap);
 
-  /* 
- for(map_it=entmap[3].begin(); map_it!=entmap[3].end(); ++map_it)
-    {
+  //ADD SENSE TAGS
 
-      // get the meshset for the volume
-      iBase_EntitySetHandle mset = map_it->second;
-
-      // get child faces of the volumes
-      std::vector<iBase_EntityHandle> faces;
-      mk->igeom_instance()->getEntAdj(map_it->first,iBase_FACE,faces);
-
-      std::vector<iBase_EntitySetHandle> surfs;
-      for(unsigned int i=0; i<faces.size(); i++)
-	{
-          //get the corresponding mesh surface sets
-          surfs.push_back(entmap[2][faces[i]]);
-
-          //add the surface meshset to the vol meshset
-          mk->imesh_instance()->addPrntChld(entmap[2][faces[i]],mset);
-	}
-    
-    }
-  */
   //check how many curves are in the file
   std::vector<iBase_EntityHandle> all_faces;
   mk->igeom_instance()->getEntities(mk->igeom_instance()->getRootSet(),iBase_FACE,all_faces);
