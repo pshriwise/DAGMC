@@ -364,8 +364,61 @@ void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::Enti
   //CREATE Geom ENT to Mesh ENTSET RELATIONS
   create_topology(mk, entmap);
 
-  //create the iMesh tags for the sense data
+  //Get and store the surface to volume sense data
   store_surface_senses(mk, entmap);
+
+
+  //Get and store the curve to surface sense data
+ 
+  //This requires two tags
+  //One for the EntitySets
+  iBase_TagHandle senseNEnts;
+  mk->imesh_instance()->createTag(GEOM_SENSE_N_ENTS_TAG_NAME,2,iBase_ENTITY_SET_HANDLE, senseNEnts);
+
+  //One for the senses
+  iBase_TagHandle senseNSenses;
+  mk->imesh_instance()->createTag(GEOM_SENSE_N_SENSES_TAG_NAME,2,iBase_INTEGER,senseNSenses);
+
+  //loop over all of the curves
+  for(map_it = entmap[1].begin(); map_it != entmap[1].end(); ++map_it)
+    {
+      //the geometry entity
+      iGeom::EntityHandle gh = map_it->first;
+ 
+      //the corresponding meshset
+      iMesh::EntitySetHandle msh = map_it->second;
+
+      //get the all surfaces adjacent to the curve
+      std::vector<iGeom::EntityHandle> surfs; 
+      mk->igeom_instance()->getEntAdj(gh,iBase_FACE,surfs);
+      std::cout << "Number of adjacent surfaces: " << surfs.size() << std::endl;
+ 
+      //vector to keep track of the senses with 
+      std::vector<int> senses;
+      std::vector<iMesh::EntitySetHandle> meshsets;
+
+      //loop over the surfaces
+      for(unsigned int i=0; i<surfs.size(); i++)
+	{
+
+          //get the curve to surface sense
+          int sense; 
+          mk->igeom_instance()->getEgFcSense(gh,surfs[i],sense);
+          senses.push_back(sense);
+
+          //populate the meshset vector 
+          meshsets.push_back(entmap[2][surfs[i]]);
+	}
+
+      mk->imesh_instance()->setEntSetData(msh,senseNSenses,&senses[0]);
+ 
+      mk->imesh_instance()->setEntSetData(msh,senseNEnts,&meshsets[0]);
+   
+      meshsets.clear();
+      senses.clear();
+
+    }
+
 
   //check how many curves are in the file
   std::vector<iBase_EntityHandle> all_faces;
