@@ -149,7 +149,7 @@ void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::Enti
   //establish the types of entities to get for each dim 
   iBase_EntityType types[4]={iBase_VERTEX,iBase_EDGE,iBase_FACE,iBase_REGION};
 
-  for(unsigned int dim = 3; dim>1; dim--)
+  for(unsigned int dim = 3; dim>0; dim--)
     {
       //CREATE SET-SET RELATIONS
       for(map_it=entmap[dim].begin(); map_it!=entmap[dim].end(); ++map_it)
