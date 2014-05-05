@@ -10,6 +10,10 @@
 #include "meshkit/SizingFunction.hpp" 
 #include "meshkit/iMesh.hpp"
 
+//ADD SENSE TAG NAMES
+const char GEOM_SENSE_2_TAG_NAME[] = "GEOM_SENSE_2";
+const char GEOM_SENSE_N_ENTS_TAG_NAME[] = "GEOM_SENSE_N_ENTS";
+const char GEOM_SENSE_N_SENSES_TAG_NAME[] = "GEOM_SENSE_N_SENSES"; 
 
 using namespace MeshKit;
 
@@ -77,6 +81,63 @@ void create_entity_sets( MKCore *mk_iface, iBase_EntitySetHandle root_set, std::
 
 
     }
+}
+
+void store_surface_senses(MKCore *mk_iface, std::map<iGeom::EntityHandle, iMesh::EntitySetHandle> (&entmap)[5])
+{
+
+  //surface to volume tag
+  iMesh::TagHandle sense2Tag;
+  mk_iface->imesh_instance()->createTag(GEOM_SENSE_2_TAG_NAME,2,iBase_ENTITY_SET_HANDLE, sense2Tag);
+
+  std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it; 
+
+  for(map_it = entmap[2].begin(); map_it != entmap[2].end(); ++map_it)
+    {
+
+      //the geometry entity
+      iGeom::EntityHandle gh = map_it->first;
+      
+      //the corresponding meshset
+      iMesh::EntitySetHandle msh = map_it->second;
+
+      //get the surface's volume handle 
+      std::vector<iGeom::EntityHandle> vols; 
+      mk_iface->igeom_instance()->getEntAdj(gh,iBase_REGION,vols);
+      std::cout << "Number of adjacent vols: " << vols.size() << std::endl;
+      
+
+      //create structure for setting the meshset sense info
+      iMesh::EntitySetHandle sense_data[2]={ 0, 0};
+
+      //loop over volumes
+      for(unsigned int i = 0; i<vols.size(); i++)
+	{
+	  //get the sense of the volume
+          int sense;
+          mk_iface->igeom_instance()->getEntNrmlSense(gh,vols[i],sense);
+          
+          //check that the forward sense isn't already set
+          if (1 == sense && 0 != sense_data[0])
+	    std::cout << "Multiple volumes found for forward sense!!" << std::endl;
+
+          //set the forward entity to the mesh set handle for this geom entity
+          if(1 == sense && 0 == sense_data[0]) sense_data[0]=entmap[3][vols[i]];
+
+          //check that the reverse sense isn't already set
+          if (-1 == sense && 0 != sense_data[1])
+	  std::cout << "Multiple volumes found for forward sense!!" << std::endl;
+
+          // set the reverse entity to the mesh set handle for this geom entity
+          if(-1 == sense && 0 == sense_data[1]) sense_data[1]=entmap[3][vols[i]];
+	}
+
+      //now set the meshset tag info
+      mk_iface->imesh_instance()->setEntSetData(msh,sense2Tag,sense_data);
+
+    }
+
+
 }
 
 void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::EntitySetHandle> (&entmap)[5])
@@ -300,65 +361,11 @@ void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::Enti
     }
 
 
-  //CREATE SET-SET RELATIONS
+  //CREATE Geom ENT to Mesh ENTSET RELATIONS
   create_topology(mk, entmap);
 
-  //ADD SENSE TAGS
-  const char GEOM_SENSE_2_TAG_NAME[] = "GEOM_SENSE_2";
-  const char GEOM_SENSE_N_ENTS_TAG_NAME[] = "GEOM_SENSE_N_ENTS";
-  const char GEOM_SENSE_N_SENSES_TAG_NAME[] = "GEOM_SENSE_N_SENSES"; 
-
   //create the iMesh tags for the sense data
-
-  //surface to volume tag
-  iMesh::TagHandle sense2Tag;
-  mk->imesh_instance()->createTag(GEOM_SENSE_2_TAG_NAME,2,iBase_ENTITY_SET_HANDLE, sense2Tag);
-
-
-  for(map_it = entmap[2].begin(); map_it != entmap[2].end(); ++map_it)
-    {
-
-      //the geometry entity
-      iGeom::EntityHandle gh = map_it->first;
-      
-      //the corresponding meshset
-      iMesh::EntitySetHandle msh = map_it->second;
-
-      //get the surface's volume handle 
-      std::vector<iGeom::EntityHandle> vols; 
-      mk->igeom_instance()->getEntAdj(gh,iBase_REGION,vols);
-      std::cout << "Number of adjacent vols: " << vols.size() << std::endl;
-      
-
-      //create structure for setting the meshset sense info
-      iMesh::EntitySetHandle sense_data[2]={ 0, 0};
-
-      //loop over volumes
-      for(unsigned int i = 0; i<vols.size(); i++)
-	{
-	  //get the sense of the volume
-          int sense;
-          mk->igeom_instance()->getEntNrmlSense(gh,vols[i],sense);
-          
-          //check that the forward sense isn't already set
-          if (1 == sense && 0 != sense_data[0])
-	    std::cout << "Multiple volumes found for forward sense!!" << std::endl;
-
-          //set the forward entity to the mesh set handle for this geom entity
-          if(1 == sense && 0 == sense_data[0]) sense_data[0]=entmap[3][vols[i]];
-
-          //check that the reverse sense isn't already set
-          if (-1 == sense && 0 != sense_data[1])
-	  std::cout << "Multiple volumes found for forward sense!!" << std::endl;
-
-          // set the reverse entity to the mesh set handle for this geom entity
-          if(-1 == sense && 0 == sense_data[1]) sense_data[1]=entmap[3][vols[i]];
-	}
-
-      //now set the meshset tag info
-      mk->imesh_instance()->setEntSetData(msh,sense2Tag,sense_data);
-
-    }
+  store_surface_senses(mk, entmap);
 
   //check how many curves are in the file
   std::vector<iBase_EntityHandle> all_faces;
