@@ -175,15 +175,7 @@ void create_topology( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::Enti
 void store_curve_senses( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::EntitySetHandle> (&entmap)[5])
 {
 
-  //This requires two tags
-  //One for the EntitySets
-  iBase_TagHandle senseNEnts;
-  mk_iface->imesh_instance()->createTag(GEOM_SENSE_N_ENTS_TAG_NAME,2,iBase_ENTITY_SET_HANDLE, senseNEnts);
-
-  //One for the senses
-  iBase_TagHandle senseNSenses;
-  mk_iface->imesh_instance()->createTag(GEOM_SENSE_N_SENSES_TAG_NAME,2,iBase_INTEGER,senseNSenses);
-
+ 
   std::map<iGeom::EntityHandle,iMesh::EntitySetHandle>::iterator map_it;
 
   //loop over all of the curves
@@ -200,6 +192,16 @@ void store_curve_senses( MKCore *mk_iface, std::map<iGeom::EntityHandle,iMesh::E
       mk_iface->igeom_instance()->getEntAdj(gh,iBase_FACE,surfs);
       std::cout << "Number of adjacent surfaces: " << surfs.size() << std::endl;
  
+      //This requires two tags
+      //One for the EntitySets
+      iBase_TagHandle senseNEnts;
+      mk_iface->imesh_instance()->createTag(GEOM_SENSE_N_ENTS_TAG_NAME,surfs.size(),iBase_ENTITY_SET_HANDLE, senseNEnts);
+
+      //One for the senses
+      iBase_TagHandle senseNSenses;
+      mk_iface->imesh_instance()->createTag(GEOM_SENSE_N_SENSES_TAG_NAME,surfs.size(),iBase_INTEGER,senseNSenses);
+
+
       //vector to keep track of the senses with 
       std::vector<int> senses;
       std::vector<iMesh::EntitySetHandle> meshsets;
