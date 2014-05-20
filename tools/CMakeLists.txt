@@ -26,7 +26,7 @@ include_directories(${IGEOM_INC} ${IMESH_INC} ${IREL_INC} ${MESHKIT_INC})
 set(LIBRARIES ${IGEOM_LIB}/libiGeom.so ${IMESH_LIB}/libiMesh.so ${IREL_LIB}/libiRel.so ${MESHKIT_LIB}/libMeshKit.so)
 
 set(CMAKE_INSTALL_PREFIX .)
-add_executable(read_cgm fresh_start.cpp)
+add_executable(read_cgm read_cgm.cpp)
 target_link_libraries(read_cgm ${LIBRARIES})
 
 install(TARGETS read_cgm DESTINATION .)
