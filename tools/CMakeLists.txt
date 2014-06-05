@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 #project name
-project(read_cgm)
+project(dagmc_preproc)
 
 
 #set itaps paths
@@ -26,8 +26,8 @@ include_directories(${IGEOM_INC} ${IMESH_INC} ${IREL_INC} ${MESHKIT_INC})
 set(LIBRARIES ${IGEOM_LIB}/libiGeom.so ${IMESH_LIB}/libiMesh.so ${IREL_LIB}/libiRel.so ${MESHKIT_LIB}/libMeshKit.so)
 
 set(CMAKE_INSTALL_PREFIX .)
-add_executable(read_cgm read_cgm.cpp)
-target_link_libraries(read_cgm ${LIBRARIES})
+add_executable(dagmc_preproc dagmc_preproc.cpp)
+target_link_libraries(dagmc_preproc ${LIBRARIES})
 
-install(TARGETS read_cgm DESTINATION .)
+install(TARGETS dagmc_preproc DESTINATION .)
 

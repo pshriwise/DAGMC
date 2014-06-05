@@ -23,16 +23,26 @@ void markup_mesh(MKCore *mk);
 
 int main(int argc, char **argv) 
 {
+
+  //establish the filename 
+  std::string filename = argv[1];
+  std::string rootname = argv[1]; 
+  rootname = rootname.erase(rootname.length()-4);
+
+  std::string filename_out = rootname + ".h5m";
+
+
+
   MKCore * mk;       // handle for the instance of MeshKit
   MEntVector surfs; // handle for the curve we need to retrieve, is a vector
   SolidSurfaceMesher * ssm;   // handle for our MeshOp that we will create
-
+  
   //set facet_tol 
   double facet_tol = 1e-3;
   double geom_resabs = 1e-6;
 
   mk = new MKCore();
-  mk->load_geometry("cyl_grps.sat");
+  mk->load_geometry(filename.c_str());
 
   mk->get_entities_by_dimension(2, surfs);
   ssm = (SolidSurfaceMesher*) mk->construct_meshop("SolidSurfaceMesher", surfs);
@@ -58,7 +68,7 @@ int main(int argc, char **argv)
   mk->imesh_instance()->setEntSetDblData(file_set,facet_tol_tag,facet_tol);
   mk->imesh_instance()->setEntSetDblData(file_set,geom_resabs_tag,geom_resabs);
 
-  mk->save_mesh("cyl_grps.h5m");
+  mk->save_mesh(filename_out.c_str());
 
 }
 
