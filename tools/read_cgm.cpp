@@ -27,17 +27,36 @@ int main(int argc, char **argv)
   MEntVector surfs; // handle for the curve we need to retrieve, is a vector
   SolidSurfaceMesher * ssm;   // handle for our MeshOp that we will create
 
+  //set facet_tol 
+  double facet_tol = 1e-3;
+  double geom_resabs = 1e-6;
+
   mk = new MKCore();
   mk->load_geometry("cyl_grps.sat");
 
   mk->get_entities_by_dimension(2, surfs);
   ssm = (SolidSurfaceMesher*) mk->construct_meshop("SolidSurfaceMesher", surfs);
-  ssm ->set_mesh_params(1e-3);
+  ssm ->set_mesh_params(facet_tol,geom_resabs);
 
   mk->setup();
   mk->execute();
 
+  //apply DAGMC tags to mesh
   markup_mesh(mk);
+
+  //create faceting_tol_tag
+  iBase_TagHandle facet_tol_tag; 
+  mk->imesh_instance()->createTag("FACETING_TOL",1,iBase_DOUBLE, facet_tol_tag);
+
+  //create the reabsorption tag 
+  iBase_TagHandle geom_resabs_tag;
+  mk->imesh_instance()->createTag("GEOMETRY_RESABS",1,iBase_DOUBLE, geom_resabs_tag);
+
+  //create the file set
+  iBase_EntitySetHandle file_set;
+  mk->imesh_instance()->createEntSet(false,file_set);
+  mk->imesh_instance()->setEntSetDblData(file_set,facet_tol_tag,facet_tol);
+  mk->imesh_instance()->setEntSetDblData(file_set,geom_resabs_tag,geom_resabs);
 
   mk->save_mesh("cyl_grps.h5m");
 
@@ -48,7 +67,7 @@ void markup_mesh(MKCore *mk)
 
   //create iMesh tag for categories
   iBase_TagHandle category_tag;
-  mk->imesh_instance()->createTag(CATEGORY_TAG_NAME,CATEGORY_TAG_SIZE,iBase_BYTES, category_tag);
+  mk->imesh_instance()->createTag(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE, iBase_BYTES, category_tag);
 
   //establish the geom categories
   char geom_categories[][CATEGORY_TAG_SIZE] = 
