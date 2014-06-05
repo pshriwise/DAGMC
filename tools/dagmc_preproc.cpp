@@ -6,7 +6,10 @@
 #include "meshkit/ModelEnt.hpp"
 #include "meshkit/Matrix.hpp"
 
+#include "DagMC.hpp"
+
 #include "MBTagConventions.hpp"
+#include "moab/ProgOptions.hpp"
 
 using namespace MeshKit;
 
@@ -24,13 +27,17 @@ void markup_mesh(MKCore *mk);
 int main(int argc, char **argv) 
 {
 
-  //establish the filename 
-  std::string filename = argv[1];
-  std::string rootname = argv[1]; 
-  rootname = rootname.erase(rootname.length()-4);
+  ProgOptions po("dagmc_preproc: a tool for preprocessing CAD files for DAGMC analysis."); 
 
-  std::string filename_out = rootname + ".h5m";
+  std::string input_file; 
+  std::string output_file = "dagmc_preproc_out.h5m";
 
+  //add progrom options 
+  po.addOpt<double>("ftol,f","Faceting distance tolerance", po.add_cancel_opt );
+  po.addOpt<std::string>("outmesh,o", "Specify output file name (default "+output_file+")", &output_file); 
+  po.addRequiredArg<std::string>("input_file", "Path to input file for preprocessing", &input_file); 
+  
+  po.parseCommandLine( argc, argv );
 
 
   MKCore * mk;       // handle for the instance of MeshKit
@@ -38,15 +45,19 @@ int main(int argc, char **argv)
   SolidSurfaceMesher * ssm;   // handle for our MeshOp that we will create
   
   //set facet_tol 
-  double facet_tol = 1e-3;
+  double facet_tol = 1e-04;
+  po.getOpt( "ftol", &facet_tol);
+
+  // this is typically the default value
+  // should it be an option??
   double geom_resabs = 1e-6;
 
   mk = new MKCore();
-  mk->load_geometry(filename.c_str());
+  mk->load_geometry(input_file.c_str());
 
   mk->get_entities_by_dimension(2, surfs);
   ssm = (SolidSurfaceMesher*) mk->construct_meshop("SolidSurfaceMesher", surfs);
-  ssm ->set_mesh_params(facet_tol,geom_resabs);
+  ssm ->set_mesh_params(facet_tol, geom_resabs);
 
   mk->setup();
   mk->execute();
@@ -68,7 +79,7 @@ int main(int argc, char **argv)
   mk->imesh_instance()->setEntSetDblData(file_set,facet_tol_tag,facet_tol);
   mk->imesh_instance()->setEntSetDblData(file_set,geom_resabs_tag,geom_resabs);
 
-  mk->save_mesh(filename_out.c_str());
+  mk->save_mesh(output_file.c_str());
 
 }
 
