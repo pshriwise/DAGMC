@@ -123,6 +123,15 @@ void markup_mesh(MKCore *mk)
   std::vector<iGeom::EntitySetHandle> gsets; 
   mk->igeom_instance()->getEntSets(mk->igeom_instance()->getRootSet(),-1,gsets);
 
+  //create a tag for iGeom group names
+  iGeom::TagHandle gname_tag;
+  mk->igeom_instance()->createTag(NAME_TAG_NAME,NAME_TAG_SIZE,iBase_BYTES,gname_tag); 
+
+  //create a tag for iMesh group names
+  iMesh::TagHandle mname_tag; 
+  mk->imesh_instance()->createTag(NAME_TAG_NAME,NAME_TAG_SIZE,iBase_BYTES,mname_tag); 
+
+
   //loop over the group sets
   for(unsigned int i = 0; i < gsets.size(); i++)
     {
@@ -133,6 +142,15 @@ void markup_mesh(MKCore *mk)
 
       //now apply the category tag to this entity set
       mk->imesh_instance()->setEntSetData(msh, category_tag, &geom_categories[4]);
+
+      //print out the group names
+      char grp_name[NAME_TAG_SIZE];
+      mk->igeom_instance()->getEntSetData(gsets[i],gname_tag,grp_name);
+
+      std::cout << "Group Name: " << grp_name << std::endl; 
+
+      //set the mesh group set with this tag name
+      mk->imesh_instance()->setEntSetData(msh,mname_tag,&grp_name);
 
     }
 }
