@@ -144,13 +144,13 @@ void markup_mesh(MKCore *mk)
       mk->imesh_instance()->setEntSetData(msh, category_tag, &geom_categories[4]);
 
       //print out the group names
-      char grp_name[NAME_TAG_SIZE];
+      char *grp_name;
       mk->igeom_instance()->getEntSetData(gsets[i],gname_tag,grp_name);
 
       std::cout << "Group Name: " << grp_name << std::endl; 
 
       //set the mesh group set with this tag name
-      mk->imesh_instance()->setEntSetData(msh,mname_tag,&grp_name);
+      mk->imesh_instance()->setEntSetData(msh,mname_tag,grp_name);
 
     }
 }
