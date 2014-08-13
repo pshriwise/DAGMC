@@ -25,6 +25,9 @@ include_directories(${IGEOM_INC} ${MOAB_INC} ${IREL_INC} ${MESHKIT_INC})
 #set lib flags
 set(LIBRARIES ${IGEOM_LIB}/libiGeom.so ${MOAB_LIB}/libiMesh.so ${IREL_LIB}/libiRel.so ${MESHKIT_LIB}/libMeshKit.so ${MOAB_LIB}/libMOAB.so)
 
+#set c++ flags
+set( CMAKE_CXX_FLAGS -g)
+
 set(CMAKE_INSTALL_PREFIX .)
 add_executable(dagmc_preproc dagmc_preproc.cpp)
 target_link_libraries(dagmc_preproc ${LIBRARIES})
