@@ -53,7 +53,19 @@ int main(int argc, char **argv)
   double geom_resabs = 1e-6;
 
   mk = new MKCore();
-  mk->load_geometry(input_file.c_str());
+  mk->load_geometry(input_file.c_str(), NULL, 0, 0, 0, false, false);
+
+ 
+  //remove the first volume
+
+  std::vector<iGeom::EntityHandle> vols;
+  mk->igeom_instance()->getEntities(0, iBase_REGION, vols);
+
+  mk->igeom_instance()->deleteEnt(vols[0]);
+  
+  //now populate the mode entities
+  mk->populate_model_ents();
+
 
   mk->get_entities_by_dimension(2, surfs);
   ssm = (SolidSurfaceMesher*) mk->construct_meshop("SolidSurfaceMesher", surfs);
