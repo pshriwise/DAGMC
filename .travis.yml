@@ -8,7 +8,7 @@ notifications:
 env: 
   matrix:
     - MOAB_VERSION="Version4.9.2"
-    - MOAB_VERSION="dagmc_refactor_reconcile"
+    - MOAB_VERSION="dagmc_refactor"
 services:
     - docker
 before_install:
