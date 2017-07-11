@@ -1,0 +1,16 @@
+# Config file for DAGMC; use the CMake find_package() function to pull this into
+# your own CMakeLists.txt file.
+#
+# This file defines the following variables:
+# DAGMC_FOUND        - boolean indicating that DAGMC is found
+# DAGMC_INCLUDE_DIRS - include directories from which to pick up DAGMC includes
+# DAGMC_LIBRARIES    - libraries need to link to DAGMC; use this in target_link_libraries for DAGMC-dependent targets
+# DAGMC_CXX, DAGMC_CC, DAGMC_F77, DAGMC_FC - compilers used to compile DAGMC
+# DAGMC_CXXFLAGS, DAGMC_CCFLAGS, DAGMC_FFLAGS, DAGMC_FCFLAGS - compiler flags used to compile DAGMC; possibly need to use these in add_definitions or CMAKE_<LANG>_FLAGS_<MODE> 
+
+set(DAGMC_FOUND 1)
+
+
+set(DAGMC_LIBRARIES "-L@CMAKE_INSTALL_PREFIX@/@INSTALL_LIB_DIR@ -ldagmc")
+set(DAGMC_LIBRARIES "-I@CMAKE_INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@")
+
