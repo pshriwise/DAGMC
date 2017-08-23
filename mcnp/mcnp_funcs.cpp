@@ -43,7 +43,7 @@ static std::vector< DagMC::RayHistory > history_bank;
 static std::vector< DagMC::RayHistory > pblcm_history_stack;
 static bool visited_surface = false;
 
-static bool use_dist_limit = false;
+static bool use_dist_limit = true;
 static double dist_limit; // needs to be thread-local
 
 
@@ -350,8 +350,8 @@ void dagmcangl_(int* jsu, double* xxx, double* yyy, double* zzz, double* ang) {
 #ifdef TRACE_DAGMC_CALLS
   std::cout << "angl: " << *xxx << ", " << *yyy << ", " << *zzz << " --> "
             << ang[0] << ", " << ang[1] << ", " << ang[2] << std::endl;
-  CartVect uvw(last_uvw);
-  CartVect norm(ang);
+  moab::CartVect uvw(last_uvw);
+  moab::CartVect norm(ang);
   double aa = angle(uvw, norm) * (180.0 / M_PI);
   std::cout << "    : " << aa << " deg to uvw" << (aa > 90.0 ? " (!)" : "")  << std::endl;
 #endif
@@ -497,8 +497,8 @@ void dagmc_surf_reflection_(double* uuu, double* vvv, double* www, int* verify_d
 
 #ifdef TRACE_DAGMC_CALLS
   // compute and report the angle between old and new
-  CartVect oldv(last_uvw);
-  CartVect newv(*uuu, *vvv, *www);
+  moab::CartVect oldv(last_uvw);
+  moab::CartVect newv(*uuu, *vvv, *www);
 
   std::cout << "surf_reflection: " << angle(oldv, newv)*(180.0 / M_PI) << std::endl;;
 #endif
@@ -646,7 +646,7 @@ void dagmctrack_(int* ih, double* uuu, double* vvv, double* www, double* xxx,
             << " next_surf=" << DAG->id_by_index(2, *jap) << " nps=" << *nps << std::endl;
   std::cout << "     : xyz=" << *xxx << " " << *yyy << " " << *zzz << " dist = " << *dls << std::flush;
   if (use_dist_limit && *jap == 0)
-    std::cout << " > distlimit" << std::flush;
+    std::cout << " > distlimit:" << " " << dist_limit << std::flush;
   std::cout << std::endl;
   std::cout << "     : uvw=" << *uuu << " " << *vvv << " " << *www << std::endl;
 #endif
