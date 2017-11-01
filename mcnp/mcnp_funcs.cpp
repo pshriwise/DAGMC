@@ -76,7 +76,7 @@ void dagmcinit_(char* cfile, int* clen,  // geom
   }
 
   workflow_data = new UWUW(cfile);
-  
+
 #ifdef CUBIT_LIBS_PRESENT
   // The Cubit 10.2 libraries enable floating point exceptions.
   // This is bad because MOAB may divide by zero and expect to continue executing.
