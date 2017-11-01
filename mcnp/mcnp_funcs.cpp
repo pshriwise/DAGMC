@@ -75,6 +75,8 @@ void dagmcinit_(char* cfile, int* clen,  // geom
     exit(EXIT_FAILURE);
   }
 
+  workflow_data = new UWUW(cfile);
+  
 #ifdef CUBIT_LIBS_PRESENT
   // The Cubit 10.2 libraries enable floating point exceptions.
   // This is bad because MOAB may divide by zero and expect to continue executing.
@@ -139,7 +141,7 @@ void dagmcwritefacets_(char* ffile, int* flen) { // facet file
 }
 
 void dagmcwritemcnp_(char* dagfile, char* lfile, int* llen, const char* mcnp_version_major) { // file with cell/surface cards
-  workflow_data = new UWUW(dagfile);
+
   std::string full_dagfilename = workflow_data->full_filepath;
 
   lfile[*llen]  = '\0';
