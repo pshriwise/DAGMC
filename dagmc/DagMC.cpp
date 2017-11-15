@@ -825,7 +825,8 @@ Tag DagMC::get_tag(const char* name, int size, TagType store,
   return retval;
 }
 
-ErrorCode DagMC::build_preconditioner() {
+ErrorCode DagMC::build_preconditioner()
+{
   ErrorCode rval;
   
   std::vector<std::string> keywords;

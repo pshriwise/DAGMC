@@ -285,8 +285,6 @@ class DagMC {
   ErrorCode get_sdf_err(const EntityHandle volume,
                         double& err);
 
-
-
   /* SECTION III: Indexing & Cross-referencing */
  public:
   /** Most calling apps refer to geometric entities with a combination of
@@ -510,7 +508,6 @@ class DagMC {
   /** storage for sdfs **/
   std::vector<SignedDistanceField*> sdfs;
 
-
   /* metadata */
   /** empty synonym map to provide as a default argument to parse_properties() */
   static const std::map<std::string, std::string> no_synonyms;
@@ -560,7 +557,6 @@ inline ErrorCode DagMC::get_root(EntityHandle vol_or_surf, EntityHandle& root) {
   MB_CHK_SET_ERR(rval, "Failed to get obb root set of volume or surface");
   return MB_SUCCESS;
 }
-
 
 } // namespace moab
 
