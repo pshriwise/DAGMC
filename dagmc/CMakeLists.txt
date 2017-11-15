@@ -3,6 +3,7 @@ message(STATUS "Building DAGMC library")
 # Source files
 list(APPEND DAGMC_SRC_FILES DagMC.cpp)
 list(APPEND DAGMC_SRC_FILES dagmcmetadata.cpp)
+list(APPEND DAGMC_SRC_FILES sdf.cpp)
 
 # Public headers
 list(APPEND DAGMC_PUB_HEADERS DagMC.hpp)
