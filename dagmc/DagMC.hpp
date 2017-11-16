@@ -227,6 +227,12 @@ class DagMC {
                                   double& next_surf_dist,
                                   bool& preconditioned);
 
+  /** precondition ray using physical distance limit */
+  ErrorCode precondition_ray(const EntityHandle volume,
+			     const double ray_start[3],
+			     const double ray_end[3],
+			     bool &fire_ray);
+
   /** returns the interpolated sdf value for a point and volume */
   ErrorCode find_sdv(const EntityHandle volume,
                      const double pnt[3],
