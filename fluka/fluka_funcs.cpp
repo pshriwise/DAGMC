@@ -31,6 +31,8 @@ dagmcMetaData* DMD;
 
 static std::ostream* raystat_dump = NULL;
 
+#define SDF_PRECONDITIONER
+
 #define ID_START 26
 
 bool debug = false;
@@ -94,7 +96,17 @@ void g_step(double& pSx,
   double point[3] = {pSx, pSy, pSz};
   double dir[3]   = {pV[0], pV[1], pV[2]};
 
+#ifdef SDF_PRECONDITIONER
+  bool preconditioned;
+  g_precond(oldReg, newReg, point, dir, propStep, retStep, preconditioned);
+  if(!preconditioned) {
+#endif
+  
   g_fire(oldReg, point, dir, propStep, retStep, saf, newReg); // fire a ray
+
+#ifdef SDF_PRECONDITIONER
+  }
+#endif
 
   if (debug) {
     std::cout << " ret = " << retStep;
