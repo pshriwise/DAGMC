@@ -400,6 +400,26 @@ double dot_product(moab::EntityHandle surface, double point[3], double direction
 int look(double& posx, double& posy, double& posz, double* dir, int& region);
 
 /**
+ * \brief g_precond is called by g_step, which is the external interface to Fluka
+ *
+ * \param[in]  oldRegion region of start point
+ * \param[in]  newRegion region after step
+ * \param[in]  point[3] start position
+ * \param[in]  dir[3] direction vector
+ * \param[in]  propStep physics proposed step length
+ * \param[out] retStep actual returned distance, governed by geometry or physics
+ * \param[out] preconditioned returns whether or not a call to g_fire is required
+ */
+void g_precond(int &oldRegion,
+	       int &newRegion,
+	       double point[],
+	       double dir[],
+	       double& retStep,
+	       double &propStep,
+	       bool& preconditioned);
+
+
+/**
  * \brief g_fire is called by g_step, which is the external interface to FLuka.
  *
  * \param[in] oldRegion region of start point

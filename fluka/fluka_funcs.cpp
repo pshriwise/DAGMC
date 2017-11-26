@@ -107,6 +107,28 @@ void g_step(double& pSx,
   return;
 }
 
+/*function to attempt avoiding the more expensive g_fire call */
+void g_precond(int &oldRegion, int &newRegion, double point[], double dir[], double& propStep, double &retStep, bool& preconditioned)
+{
+  moab::EntityHandle volume = DAG->entity_by_index(3, oldRegion);
+
+  moab::EntityHandle next_surf;
+  double dum;
+  moab::ErrorCode rval = DAG->precondition_ray_fire(volume, point, dir, propStep, next_surf, dum, preconditioned);
+  if (rval != moab::MB_SUCCESS)
+    fludag_abort("g_precond", "Failed to precondition ray query", rval);
+
+  if (preconditioned) {
+    newRegion = oldRegion;
+    retStep = propStep;
+    state.next_surface = state.prev_surface;
+    state.history.reset();
+    state.on_boundary = false;
+    state.PrevRegion = newRegion;
+  }
+  return;
+};
+
 /* function to determine the particles next volume & step length */
 void g_fire(int& oldRegion, double point[], double dir[], double& propStep,
             double& retStep, double& safety,  int& newRegion) {
