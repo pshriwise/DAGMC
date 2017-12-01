@@ -98,7 +98,7 @@ void g_step(double& pSx,
 
 #ifdef SDF_PRECONDITIONER
   bool preconditioned;
-  g_precond(oldReg, newReg, point, dir, propStep, retStep, preconditioned);
+  if(!state.on_boundary) { g_precond(oldReg, newReg, point, dir, propStep, retStep, preconditioned); }
   if(!preconditioned) {
 #endif
   
