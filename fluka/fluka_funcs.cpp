@@ -426,7 +426,18 @@ inline bool check_vol(double pos[3], double dir[3], int oldRegion) {
   int is_inside; // in volume or not
   // convert region id into entityhandle
   moab::EntityHandle volume = DAG->entity_by_index(3, oldRegion); // get the volume by index
-  moab::ErrorCode rval = DAG->point_in_volume(volume, pos, is_inside, dir);
+  moab::ErrorCode rval;
+#ifdef SDF_PRECONDITIONER
+  bool preconditioned = false;
+  rval = DAG->precondition_point_in_volume(volume, pos, is_inside, preconditioned);
+  if (moab::MB_SUCCESS != rval )
+    fludag_abort("check_vol", "DAGMC failed to precondition point_in_volume call", rval);
+
+  if ( preconditioned ) return (is_inside) ? true : false;
+#endif
+
+  
+  rval = DAG->point_in_volume(volume, pos, is_inside, dir);
 
   // check for non error
   if (moab::MB_SUCCESS != rval)
@@ -449,6 +460,29 @@ int look(double& posx, double& posy, double& posz, double* dir, int& oldRegion) 
 }
 
 
+void f_look_precond(moab::EntityHandle volume, const double* xyz, int &is_inside,
+	       int&flagErr, int &nextRegion, bool &preconditioned) {
+
+  moab::ErrorCode rval = DAG->precondition_point_in_volume(volume, xyz, is_inside, preconditioned);
+  if (moab::MB_SUCCESS != rval)
+    fludag_abort("f_look_precond", "DAGMC failed in precondition_point_in_volume", rval);
+    
+  if ( preconditioned ) {
+    if( is_inside ) {
+      //WHEN WE ARE INSIDE A VOLUME, BOTH, nextRegion has to equal flagErr
+      nextRegion = DAG->index_by_handle(volume);
+      flagErr = nextRegion;
+    }
+    else {
+      // if are here then no volume has been found
+      nextRegion = -33;
+      flagErr = nextRegion;
+    }
+  }
+
+  return;
+}
+
 /* determine where a particle is, given position, direction etc */
 void f_look(double& pSx, double& pSy, double& pSz,
             double* pV, const int& oldReg, const int& oldLttc,
@@ -468,10 +502,17 @@ void f_look(double& pSx, double& pSy, double& pSz,
 
   int is_inside = 0;
   int num_vols = DAG->num_entities(3);  // number of volumes
-
+  
   for (int i = 1 ; i <= num_vols ; i++) { // loop over all volumes
     moab::EntityHandle volume = DAG->entity_by_index(3, i); // get the volume by index
-    // No ray history  - doesnt matter, only called for new source particles
+
+#ifdef SDF_PRECONDITIONER
+    bool preconditioned = false;
+    f_look_precond(volume, xyz, is_inside, flagErr, nextRegion, preconditioned);
+    if (preconditioned) return;
+#endif
+
+    // No ray history  - doesnt matter, only called for new source particles    
     moab::ErrorCode rval = DAG->point_in_volume(volume, xyz, is_inside, dir);
     // check for non error
     if (moab::MB_SUCCESS != rval)
