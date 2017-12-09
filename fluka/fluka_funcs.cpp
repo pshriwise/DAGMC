@@ -505,15 +505,28 @@ void f_look(double& pSx, double& pSy, double& pSz,
   
   for (int i = 1 ; i <= num_vols ; i++) { // loop over all volumes
     moab::EntityHandle volume = DAG->entity_by_index(3, i); // get the volume by index
-
+    moab::ErrorCode rval;
 #ifdef SDF_PRECONDITIONER
     bool preconditioned = false;
-    f_look_precond(volume, xyz, is_inside, flagErr, nextRegion, preconditioned);
-    if (preconditioned) return;
+    rval = DAG->precondition_point_in_volume(volume, xyz, is_inside, preconditioned);
+    if(moab::MB_SUCCESS != rval)
+      fludag_abort("precondition_piv", "DAGMC failed to precondition a point in volume check", rval);
+    // if preconditioned, set next region and exit
+    // if not, continue search
+    if (preconditioned) {
+      if(is_inside) {
+	nextRegion = i;
+	flagErr = nextRegion;
+	return;
+      }
+      else{
+	continue;
+      }
+    }
 #endif
 
     // No ray history  - doesnt matter, only called for new source particles    
-    moab::ErrorCode rval = DAG->point_in_volume(volume, xyz, is_inside, dir);
+    rval = DAG->point_in_volume(volume, xyz, is_inside, dir);
     // check for non error
     if (moab::MB_SUCCESS != rval)
       fludag_abort("f_look", "DAGMC failed in point_in_volume", rval);
