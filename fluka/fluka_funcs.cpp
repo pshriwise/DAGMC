@@ -122,6 +122,15 @@ void g_step(double& pSx,
 /*function to attempt avoiding the more expensive g_fire call */
 void g_precond(int &oldRegion, int &newRegion, double point[], double dir[], double& propStep, double &retStep, bool& preconditioned)
 {
+
+  if(debug) {
+    std::cout << "Preconditioning particle: " << std::endl;
+    std::cout << "------------------------- " << std::endl;
+    std::cout << "Pos: " << point[0] << " " << point[1] << " " << point[2] << std::endl;
+    std::cout << "Dir: " << dir[0]   << " " << dir[1]   << " " << dir[2]   << std::endl;
+    std::cout << "Phys dist: " << propStep << std::endl;
+  }
+  
   moab::EntityHandle volume = DAG->entity_by_index(3, oldRegion);
 
   moab::EntityHandle next_surf;
@@ -130,6 +139,10 @@ void g_precond(int &oldRegion, int &newRegion, double point[], double dir[], dou
   if (rval != moab::MB_SUCCESS)
     fludag_abort("g_precond", "Failed to precondition ray query", rval);
 
+  if (debug && preconditioned) {
+    std::cout << "Particle preconditioned. Ray fire avoided" << std::endl;
+  }
+  
   if (preconditioned) {
     newRegion = oldRegion;
     retStep = propStep;
