@@ -1179,6 +1179,14 @@ ErrorCode DagMC::find_sdv(const EntityHandle volume,
   return MB_SUCCESS;
 };
 
+ErrorCode DagMC::find_sdv(const EntityHandle volume,
+                          const double pnt[3],
+                          double& sdv ) {
+  ErrorCode rval;
+  double err;
+  return find_sdv(volume, pnt, sdv, err);
+};
+
 
 ErrorCode DagMC::get_sdf_err(const EntityHandle volume,
                              double& err) {
