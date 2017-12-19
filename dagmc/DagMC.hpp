@@ -291,6 +291,10 @@ class DagMC {
                      double& sdv,
                      double& sdv_err);
 
+  ErrorCode find_sdv(const EntityHandle volume,
+                     const double pnt[3],
+                     double& sdv);
+
   /** returns the error associated with signed distance value interpolations for the specified volume */
   ErrorCode get_sdf_err(const EntityHandle volume,
                         double& err);
