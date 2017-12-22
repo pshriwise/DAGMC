@@ -8,6 +8,8 @@ set(DAGMC_MINOR_VERSION 1)
 set(DAGMC_PATCH_VERSION 0)
 set(DAGMC_VERSION ${DAGMC_MAJOR_VERSION}.${DAGMC_MINOR_VERSION}.${DAGMC_PATCH_VERSION})
 
+set(CMAKE_CXX_STANDARD 11)
+
 # Make the scripts in the "cmake" directory available to CMake
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(DAGMC_macros)
