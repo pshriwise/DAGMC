@@ -1,6 +1,7 @@
 project(DAGMC)
 
 cmake_minimum_required(VERSION 2.8)
+SET(CMAKE_CXX_STANDARD 11)
 
 # Setup test macro
 macro (setup_test test_name ext driver libs)
@@ -61,6 +62,7 @@ endif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 
 # Make sure we have HDF5
 find_package(HDF5 REQUIRED)
+find_package(MBVH)
 
 # Make sure we have MOAB
 find_package(MOAB REQUIRED)
@@ -77,6 +79,11 @@ if (BUILD_STATIC)
   list(APPEND DAG_LINK_LIBS quadmath)
 endif (BUILD_STATIC)
 message(STATUS "DAG_LINK_LIBS: ${DAG_LINK_LIBS}")
+
+if(MBVH_FOUND)
+  include_directories(${MBVH_INCLUDES})
+endif(MBVH_FOUND)
+
 
 # Get some environment variables
 set(ENV_USER "$ENV{USER}")
