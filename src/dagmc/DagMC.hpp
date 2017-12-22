@@ -17,6 +17,9 @@
 #include <string>
 #include <assert.h>
 
+#include "MBVH.h"
+#include "MBVHManager.h"
+
 class RefEntity;
 
 struct DagmcVolData {
@@ -392,6 +395,7 @@ class DagMC {
 
   GeomTopoTool* GTT;
   GeomQueryTool* GQT;
+  MBVHManager* MBVH;
 
  public:
   Tag  nameTag, facetingTolTag;

@@ -54,6 +54,8 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   GTT = new moab::GeomTopoTool(MBI, false);
   GQT = new moab::GeomQueryTool(GTT, overlap_tolerance, p_numerical_precision);
 
+  MBVH = new MBVHManager(MBI);
+
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
 }
@@ -207,6 +209,9 @@ ErrorCode DagMC::init_OBBTree() {
   rval = setup_indices();
   MB_CHK_SET_ERR(rval, "Failed to setup problem indices");
 
+  rval = MBVH->build_all();
+  MB_CHK_SET_ERR(rval, "Failed to build the BVH");
+  
   return MB_SUCCESS;
 }
 
