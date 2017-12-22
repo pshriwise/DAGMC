@@ -21,6 +21,9 @@
 #include "moab/Interface.hpp"
 #include "moab/Range.hpp"
 
+#include "MBVH.h"
+#include "MBVHManager.h"
+
 class RefEntity;
 
 struct DagmcVolData {
@@ -483,6 +486,7 @@ class DagMC {
 #endif
 
   std::unique_ptr<RayTracer> ray_tracer;
+  MBVHManager* MBVH;
 
  public:
   Tag nameTag, facetingTolTag;
