@@ -1,6 +1,7 @@
 project(DAGMC)
 
 cmake_minimum_required(VERSION 2.8)
+SET(CMAKE_CXX_STANDARD 11)
 
 set(DAGMC_MAJOR_VERSION 3)
 set(DAGMC_MINOR_VERSION 0)
@@ -68,6 +69,7 @@ endif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 
 # Make sure we have HDF5
 find_package(HDF5 REQUIRED)
+find_package(MBVH)
 
 # Make sure we have MOAB
 find_package(MOAB REQUIRED)
@@ -89,6 +91,11 @@ string(REGEX REPLACE "-L" "" MOAB_LIBRARY_DIRS "${MOAB_LIBRARY_DIRS}")
 
 set(DAG_LINK_LIBS ${MOAB_LIBRARIES})
 message(STATUS "DAG_LINK_LIBS: ${DAG_LINK_LIBS}")
+
+if(MBVH_FOUND)
+  include_directories(${MBVH_INCLUDES})
+endif(MBVH_FOUND)
+
 
 # Get some environment variables
 set(ENV_USER "$ENV{USER}")
