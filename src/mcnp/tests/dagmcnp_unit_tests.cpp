@@ -29,6 +29,9 @@ class DAGMCNP5Test : public ::testing::Test {
     dagmcinit_(file, &len, ftol, &ftol_len, &parallel_mode,
                &dagmc_version, &moab_version, &max_pbl);
 
+    dagmc_teardown_();
+    
+
   }
   void setup_problem_comp() {
     std::string filename = test_file_comp;
@@ -45,7 +48,8 @@ class DAGMCNP5Test : public ::testing::Test {
     // intialise dagmc
     dagmcinit_(file, &len, ftol, &ftol_len, &parallel_mode,
                &dagmc_version, &moab_version, &max_pbl);
-
+    
+    dagmc_teardown_();
   }
 
   void setup_problem_reflecting() {
@@ -63,6 +67,7 @@ class DAGMCNP5Test : public ::testing::Test {
     // intialise dagmc
     dagmcinit_(file, &len, ftol, &ftol_len, &parallel_mode,
                &dagmc_version, &moab_version, &max_pbl);
+    dagmc_teardown_();
 
   }
 
