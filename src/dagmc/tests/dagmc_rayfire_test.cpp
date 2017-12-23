@@ -35,13 +35,6 @@ class DagmcRayFireTest : public ::testing::Test {
   moab::ErrorCode rval;
 };
 
-TEST_F(DagmcRayFireTest, dagmc_setup_test) {
-  ErrorCode rval = DAG->load_file(input_file);
-  EXPECT_EQ(rval, MB_SUCCESS);
-  rval = DAG->init_OBBTree();
-  EXPECT_EQ(rval, MB_SUCCESS);
-}
-
 TEST_F(DagmcRayFireTest, dagmc_origin_face_rayfire) {
   int vol_idx = 1;
   EntityHandle vol_h = DAG->entity_by_index(3, vol_idx);

@@ -33,13 +33,6 @@ class DagmcPointInVolTest : public ::testing::Test {
   moab::ErrorCode rval;
 };
 
-TEST_F(DagmcPointInVolTest, dagmc_setup_test) {
-  ErrorCode rval = DAG->load_file(input_file);
-  EXPECT_EQ(rval, MB_SUCCESS);
-  rval = DAG->init_OBBTree();
-  EXPECT_EQ(rval, MB_SUCCESS);
-}
-
 TEST_F(DagmcPointInVolTest, dagmc_point_in) {
   int result = 0;
   int expected_result = 1;
