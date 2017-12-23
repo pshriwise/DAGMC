@@ -21,6 +21,20 @@
 #define MB_OBB_TREE_TAG_NAME "OBB_TREE"
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
+
+void backface_cull(MBRay &ray, void*) {
+  moab::CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
+
+  moab::CartVect ray_dir(ray.dir[0], ray.dir[1], ray.dir[2]);
+
+  if(ray_dir % tri_norm < 0.0) {
+    ray.geomID = -1;
+    ray.primID = -1;
+  }
+
+  return;
+}
+
 namespace moab {
 
 /* Tolerance Summary
@@ -54,7 +68,6 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   GTT = new moab::GeomTopoTool(MBI, false);
   GQT = new moab::GeomQueryTool(GTT, overlap_tolerance, p_numerical_precision);
 
-  MBVH = new MBVHManager(MBI);
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -209,6 +222,7 @@ ErrorCode DagMC::init_OBBTree() {
   rval = setup_indices();
   MB_CHK_SET_ERR(rval, "Failed to setup problem indices");
 
+  MBVH = new MBVHManager(MBI);
   rval = MBVH->build_all();
   MB_CHK_SET_ERR(rval, "Failed to build the BVH");
   
@@ -271,9 +285,36 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
-                                 history, user_dist_limit, ray_orientation,
-                                 stats);
+  // ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+  //                                history, user_dist_limit, ray_orientation,
+  //                                stats);
+
+  MBRay ray(point, dir);
+  ray.instID = volume;
+  if(ray_orientation == 1) {
+    MBVH->MOABBVH->set_filter(backface_cull);
+  }
+  else {
+    MBVH->MOABBVH->unset_filter();
+  }    
+  ErrorCode rval = MBVH->fireRay(volume, ray);
+  MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
+
+  // if we missed, check behind for a hit
+  if( ray.geomID == -1 ) {
+    ray.tnear = 1e-03;
+    ray.dir = - ray.dir;
+    MBVH->MOABBVH->unset_filter();
+    ErrorCode rval = MBVH->fireRay(volume, ray);
+    MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
+
+    // distance should technically be zero if we've found a negative distance hit
+    ray.tfar = 0;
+  }
+  
+  next_surf_dist = ray.tfar;
+  next_surf = ray.geomID;
+
   return rval;
 }
 
