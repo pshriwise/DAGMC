@@ -339,7 +339,30 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  int& result, const double* uvw,
                                  const RayHistory* history) {
-  ErrorCode rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
+  ErrorCode rval;
+#ifdef SIMD_BVH
+  double rand_dir[3] = {0.7071, 0.7071, 0.0};
+  MBRay ray(xyz, rand_dir);
+  ray.instID = volume;
+  MBVH->MOABBVH->unset_filter();
+  rval = MBVH->fireRay(volume, ray);
+  MB_CHK_SET_ERR(rval, "Failed to fire ray using MBVH");
+
+  CartVect ray_dir(rand_dir);
+  CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
+
+  if(ray.geomID != -1) {
+    result = (ray_dir % tri_norm) ? 1 : 0;
+  }
+  else {
+    result = 0;
+  }
+
+  return rval;
+#endif
+  
+  rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
+  
   return rval;
 }
 
