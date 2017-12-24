@@ -301,8 +301,9 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
   // if we missed, check behind for a hit
-  if( ray.geomID == -1 ) {
-    ray.tnear = 1e-03;
+  if( ray.geomID == -1 && GQT->get_overlap_thickness() != 0.0 ) {
+    ray.tnear = 1e-06;
+    ray.tfar = GQT->get_overlap_thickness();
     ray.dir = - ray.dir;
     MBVH->MOABBVH->unset_filter();
     ErrorCode rval = MBVH->fireRay(volume, ray);
@@ -311,10 +312,16 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
     // distance should technically be zero if we've found a negative distance hit
     ray.tfar = 0;
   }
-  
-  next_surf_dist = ray.tfar;
-  next_surf = ray.geomID;
 
+  if ( ray.geomID != -1) {
+    next_surf_dist = ray.tfar;
+    next_surf = ray.geomID;
+  }
+  else {
+    next_surf_dist = ray.tfar;
+    next_surf = 0;
+  }
+  
   return rval;
 }
 
