@@ -17,7 +17,14 @@ include(DAGMC_macros)
 dagmc_setup_build()
 dagmc_setup_options()
 
+
 find_package(MOAB REQUIRED)
+
+find_package(MBVH QUIET)
+if(MBVH_FOUND)
+  add_definitions(-DSIMD_BVH)
+  include_directories(${MBVH_INCLUDES})
+endif(MBVH_FOUND)
 
 dagmc_setup_flags()
 

@@ -12,4 +12,6 @@ find_path(MBVH_CMAKE_CONFIG NAMES MBVHConfig.cmake
 
 message(STATUS "Found MBVH in ${MBVH_CMAKE_CONFIG}")
 
-include(${MBVH_CMAKE_CONFIG}/MBVHConfig.cmake)
+if(NOT "${MBVH_CMAKE_CONFIG}" STREQUAL "")
+    include(${MBVH_CMAKE_CONFIG}/MBVHConfig.cmake)
+endif()

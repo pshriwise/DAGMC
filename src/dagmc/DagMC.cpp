@@ -21,7 +21,7 @@
 #define MB_OBB_TREE_TAG_NAME "OBB_TREE"
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
-
+#ifdef SIMD_BVH
 void backface_cull(MBRay &ray, void*) {
   moab::CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
 
@@ -34,6 +34,7 @@ void backface_cull(MBRay &ray, void*) {
 
   return;
 }
+#endif
 
 namespace moab {
 
@@ -222,9 +223,11 @@ ErrorCode DagMC::init_OBBTree() {
   rval = setup_indices();
   MB_CHK_SET_ERR(rval, "Failed to setup problem indices");
 
+#ifdef SIMD_BVH
   MBVH = new MBVHManager(MBI);
   rval = MBVH->build_all();
   MB_CHK_SET_ERR(rval, "Failed to build the BVH");
+#endif
   
   return MB_SUCCESS;
 }
@@ -285,10 +288,10 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  // ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
-  //                                history, user_dist_limit, ray_orientation,
-  //                                stats);
+  ErrorCode rval;
 
+#ifdef SIMD_BVH
+  
   MBRay ray(point, dir);
   ray.instID = volume;
   if(ray_orientation == 1) {
@@ -297,7 +300,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   else {
     MBVH->MOABBVH->unset_filter();
   }    
-  ErrorCode rval = MBVH->fireRay(volume, ray);
+  rval = MBVH->fireRay(volume, ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
   // if we missed, check behind for a hit
@@ -321,7 +324,15 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
     next_surf_dist = ray.tfar;
     next_surf = 0;
   }
+
+  return rval;
   
+#endif
+  
+  rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+                                  history, user_dist_limit, ray_orientation,
+                                  stats);
+
   return rval;
 }
 
