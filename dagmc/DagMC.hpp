@@ -29,9 +29,12 @@ struct DagmcVolData {
   std::string comp_name;
 };
 
+struct MBRayAccum : MBRay { int sum; int num_hit; };
+
 
 namespace moab {
 
+  
 class CartVect;
 
 #define DAGMC_VERSION 3.0

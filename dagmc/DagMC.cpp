@@ -22,16 +22,36 @@
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
 #ifdef SIMD_BVH
-void backface_cull(MBRay &ray, void*) {
+double dot_prod(MBRay ray) {
+  moab::CartVect ray_dir(ray.dir[0], ray.dir[1], ray.dir[2]);
   moab::CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
 
-  moab::CartVect ray_dir(ray.dir[0], ray.dir[1], ray.dir[2]);
+  return ray_dir % tri_norm;
+}
 
-  if(ray_dir % tri_norm < 0.0) {
+void backface_cull(MBRay &ray, void*) {
+
+  if(dot_prod(ray) < 0.0) {
     ray.geomID = -1;
     ray.primID = -1;
   }
 
+  return;
+}
+
+void count_hits(MBRayAccum &ray, void*) {
+
+  if (dot_prod(ray) > 0.0) {
+    ray.sum -= 1; // leaving
+  }
+  else {
+    ray.sum += 1; // entering
+  }
+
+  ray.geomID = -1;
+  ray.primID = -1;
+
+  ray.num_hit++;
   return;
 }
 #endif
@@ -341,22 +361,68 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  const RayHistory* history) {
   ErrorCode rval;
 #ifdef SIMD_BVH
-  double rand_dir[3] = {0.7071, 0.7071, 0.0};
-  MBRay ray(xyz, rand_dir);
+  double dir[3] { 0.0, 0.0, 0.0 };
+
+  if ( uvw ) {
+    dir[0] = uvw[0]; dir[1] = uvw[1]; dir[2] = uvw[2];
+  }
+			
+  if( dir[0] == 0 && dir[1] == 0 && dir[2] == 0 )
+    {
+      srand(51);    
+      dir[0] = rand();
+      dir[1] = rand();
+      dir[2] = rand();
+      const double magnitude = sqrt( dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2] );
+      dir[0] /= magnitude;
+      dir[1] /= magnitude;
+      dir[2] /= magnitude;
+    }
+
+  
+  MBRay ray(xyz, dir);
   ray.instID = volume;
   MBVH->MOABBVH->unset_filter();
   rval = MBVH->fireRay(volume, ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray using MBVH");
 
-  CartVect ray_dir(rand_dir);
+  CartVect ray_dir(dir);
   CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
 
   if(ray.geomID != -1) {
-    result = (ray_dir % tri_norm) ? 1 : 0;
+    result = (ray_dir % tri_norm) > 0.0 ? 1 : 0;
   }
   else {
     result = 0;
   }
+
+  MBRayAccum aray;
+  aray.org = xyz;
+  aray.dir = dir;
+  aray.instID = volume;
+  aray.tfar = inf;
+  aray.tnear = 0.0;
+  aray.sum = 0;
+  aray.num_hit = 0;
+  MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)count_hits);
+  rval = MBVH->fireRay(volume, aray);
+  if( aray.num_hit == 0 ) { result = 0; return rval; }
+  int hits = aray.num_hit;
+  // reset and fire in negative direction
+  aray.geomID = -1;
+  aray.primID = -1;
+  aray.tfar = inf;
+  aray.tnear = 0.0;
+  aray.dir = aray.dir * -1;
+  rval = MBVH->fireRay(volume, aray);
+  if (aray.num_hit == hits ) { result = 0; return rval; }
+  
+  // inside/outside depends on the sum
+  if      (0 < aray.sum)                                          result = 0; // pt is outside (for all vols)
+  else if (0 > aray.sum)                                          result = 1; // pt is inside  (for all vols)
+  else if ( GTT->is_implicit_complement(volume) )                 result = 1; // pt is inside  (for impl_compl_vol)
+  else                                                            result = 0; // pt is outside (for all other vols)
+
 
   return rval;
 #endif
@@ -365,7 +431,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
   
   return rval;
 }
-
+  
 ErrorCode DagMC::test_volume_boundary(const EntityHandle volume,
                                       const EntityHandle surface,
                                       const double xyz[3], const double uvw[3],
