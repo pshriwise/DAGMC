@@ -17,8 +17,10 @@
 #include <string>
 #include <assert.h>
 
+#ifdef SIMD_BVH
 #include "MBVH.h"
 #include "MBVHManager.h"
+#endif
 
 class RefEntity;
 
@@ -395,8 +397,11 @@ class DagMC {
 
   GeomTopoTool* GTT;
   GeomQueryTool* GQT;
+  
+#ifdef SIMD_BVH
   MBVHManager* MBVH;
-
+#endif
+  
  public:
   Tag  nameTag, facetingTolTag;
  private:
