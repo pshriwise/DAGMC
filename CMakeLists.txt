@@ -62,7 +62,7 @@ endif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 
 # Make sure we have HDF5
 find_package(HDF5 REQUIRED)
-find_package(MBVH)
+find_package(MBVH QUIET)
 
 # Make sure we have MOAB
 find_package(MOAB REQUIRED)
@@ -81,6 +81,7 @@ endif (BUILD_STATIC)
 message(STATUS "DAG_LINK_LIBS: ${DAG_LINK_LIBS}")
 
 if(MBVH_FOUND)
+  add_definitions(-DSIMD_BVH)
   include_directories(${MBVH_INCLUDES})
 endif(MBVH_FOUND)
 

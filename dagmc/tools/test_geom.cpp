@@ -647,11 +647,19 @@ ErrorCode test_ray_fire(DagMC* dagmc) {
     // interior
     { 2, { 1.0, 0.0, 0.5 }, { -1.0, 0.0, 0.0 },             6, 0.5   },
     // glancing node then piercing edge
+#ifdef SIMD_BVH
+    { 2, { 1.0, 0.0, 0.0 }, { -1.0, 0.0, 0.0 },             6, 1.0   },
+#else
     { 2, { 1.0, 0.0, 0.0 }, { -1.0, 0.0, 0.0 },             4, 2.0   },
+#endif
     // piercing node
     { 1, { 0.0, 0.0, -1. }, {  0.0, 0.0, 1.0 },             6, 1.0   },
     // glancing edge then interior
+#ifdef SIMD_BVH
+    { 2, { 1.0, 0.0, 0.5 }, { -1.0 / ROOT2, 1.0 / ROOT2, 0.0 }, 6, ROOT2/2.0 }
+#else
     { 2, { 1.0, 0.0, 0.5 }, { -1.0 / ROOT2, 1.0 / ROOT2, 0.0 }, 3, ROOT2 }
+#endif
   };
 
   ErrorCode rval;
