@@ -21,8 +21,10 @@
 #include "moab/Interface.hpp"
 #include "moab/Range.hpp"
 
+#ifdef SIMD_BVH
 #include "MBVH.h"
 #include "MBVHManager.h"
+#endif
 
 class RefEntity;
 
@@ -486,7 +488,10 @@ class DagMC {
 #endif
 
   std::unique_ptr<RayTracer> ray_tracer;
+
+#ifdef SIMD_BVH
   MBVHManager* MBVH;
+#endif
 
  public:
   Tag nameTag, facetingTolTag;

@@ -600,23 +600,32 @@ ErrorCode test_ray_fire(DagMC* dagmc) {
   // Piercing ray-triangle intersections are valid exit intersections.
   // "0" destination surface implies that it is ambiguous.
   const struct ray_fire tests[] = {
-      /* src_srf origin               direction                 dest dist */
-      // piercing edge
-      {1, {0.0, 0.0, -1.}, {-1.0 / ROOT2, 0.0, 1.0 / ROOT2}, 4, ROOT2},
-      // piercing edge
-      {1, {0.0, 0.0, -1.}, {1.0 / ROOT2, 0.0, 1.0 / ROOT2}, 2, ROOT2},
-      // piercing edge
-      {1, {0.0, 0.0, -1.}, {0.0, 1.0 / ROOT2, 1.0 / ROOT2}, 3, ROOT2},
-      // piercing edge
-      {1, {0.5, 0.5, -1.}, {0.0, 0.0, 1.0}, 6, 1.5},
-      // interior
-      {2, {1.0, 0.0, 0.5}, {-1.0, 0.0, 0.0}, 6, 0.5},
-      // glancing node then piercing edge
-      {2, {1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}, 4, 2.0},
-      // piercing node
-      {1, {0.0, 0.0, -1.}, {0.0, 0.0, 1.0}, 6, 1.0},
-      // glancing edge then interior
-      {2, {1.0, 0.0, 0.5}, {-1.0 / ROOT2, 1.0 / ROOT2, 0.0}, 3, ROOT2}};
+    /* src_srf origin               direction                 dest dist */
+    // piercing edge
+    { 1, { 0.0, 0.0, -1. }, { -1.0 / ROOT2, 0.0, 1.0 / ROOT2 }, 4, ROOT2 },
+    // piercing edge
+    { 1, { 0.0, 0.0, -1. }, {  1.0 / ROOT2, 0.0, 1.0 / ROOT2 }, 2, ROOT2 },
+    // piercing edge
+    { 1, { 0.0, 0.0, -1. }, {  0.0, 1.0 / ROOT2, 1.0 / ROOT2 }, 3, ROOT2 },
+    // piercing edge
+    { 1, { 0.5, 0.5, -1. }, {  0.0, 0.0, 1.0 },             6, 1.5   },
+    // interior
+    { 2, { 1.0, 0.0, 0.5 }, { -1.0, 0.0, 0.0 },             6, 0.5   },
+    // glancing node then piercing edge
+#ifdef SIMD_BVH
+    { 2, { 1.0, 0.0, 0.0 }, { -1.0, 0.0, 0.0 },             6, 1.0   },
+#else
+    { 2, { 1.0, 0.0, 0.0 }, { -1.0, 0.0, 0.0 },             4, 2.0   },
+#endif
+    // piercing node
+    { 1, { 0.0, 0.0, -1. }, {  0.0, 0.0, 1.0 },             6, 1.0   },
+    // glancing edge then interior
+#ifdef SIMD_BVH
+    { 2, { 1.0, 0.0, 0.5 }, { -1.0 / ROOT2, 1.0 / ROOT2, 0.0 }, 6, ROOT2/2.0 }
+#else
+    { 2, { 1.0, 0.0, 0.5 }, { -1.0 / ROOT2, 1.0 / ROOT2, 0.0 }, 3, ROOT2 }
+#endif
+  };
 
   ErrorCode rval;
   Interface* moab = dagmc->moab_instance();
