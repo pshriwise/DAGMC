@@ -396,34 +396,35 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
     result = 0;
   }
 
-  MBRayAccum aray;
-  aray.org = xyz;
-  aray.dir = dir;
-  aray.instID = volume;
-  aray.tfar = inf;
-  aray.tnear = 0.0;
-  aray.sum = 0;
-  aray.num_hit = 0;
-  MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)count_hits);
-  rval = MBVH->fireRay(volume, aray);
-  if( aray.num_hit == 0 ) { result = 0; return rval; }
-  int hits = aray.num_hit;
-  // reset and fire in negative direction
-  aray.geomID = -1;
-  aray.primID = -1;
-  aray.tfar = inf;
-  aray.tnear = 0.0;
-  aray.dir = aray.dir * -1;
-  rval = MBVH->fireRay(volume, aray);
-  if (aray.num_hit == hits ) { result = 0; return rval; }
+  if (GQT->get_overlap_thickness() != 0.0 ) {
+    MBRayAccum aray;
+    aray.org = xyz;
+    aray.dir = dir;
+    aray.instID = volume;
+    aray.tfar = inf;
+    aray.tnear = 0.0;
+    aray.sum = 0;
+    aray.num_hit = 0;
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)count_hits);
+    rval = MBVH->fireRay(volume, aray);
+    if( aray.num_hit == 0 ) { result = 0; return rval; }
+    int hits = aray.num_hit;
+    // reset and fire in negative direction
+    aray.geomID = -1;
+    aray.primID = -1;
+    aray.tfar = inf;
+    aray.tnear = 0.0;
+    aray.dir = aray.dir * -1;
+    rval = MBVH->fireRay(volume, aray);
+    if (aray.num_hit == hits ) { result = 0; return rval; }
+    
+    // inside/outside depends on the sum
+    if      (0 < aray.sum)                                          result = 0; // pt is outside (for all vols)
+    else if (0 > aray.sum)                                          result = 1; // pt is inside  (for all vols)
+    else if ( GTT->is_implicit_complement(volume) )                 result = 1; // pt is inside  (for impl_compl_vol)
+    else                                                            result = 0; // pt is outside (for all other vols)
+  }
   
-  // inside/outside depends on the sum
-  if      (0 < aray.sum)                                          result = 0; // pt is outside (for all vols)
-  else if (0 > aray.sum)                                          result = 1; // pt is inside  (for all vols)
-  else if ( GTT->is_implicit_complement(volume) )                 result = 1; // pt is inside  (for impl_compl_vol)
-  else                                                            result = 0; // pt is outside (for all other vols)
-
-
   return rval;
 #endif
   
