@@ -236,8 +236,8 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  rval = setup_obbs();
-  MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+  // rval = setup_obbs();
+  //MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
   rval = setup_indices();
@@ -359,7 +359,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  int& result, const double* uvw,
                                  const RayHistory* history) {
-  ErrorCode rval;
+  ErrorCode rval = MB_SUCCESS;
 #ifdef SIMD_BVH
   double dir[3] { 0.0, 0.0, 0.0 };
 
@@ -391,6 +391,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
 
   if(ray.geomID != -1) {
     result = (ray_dir % tri_norm) > 0.0 ? 1 : 0;
+    return rval;
   }
   else {
     result = 0;
