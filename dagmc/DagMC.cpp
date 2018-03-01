@@ -320,7 +320,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   else {
     MBVH->MOABBVH->unset_filter();
   }    
-  rval = MBVH->fireRay(volume, ray);
+  rval = MBVH->fireRay(ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
   // if we missed, check behind for a hit
@@ -329,7 +329,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
     ray.tfar = GQT->get_overlap_thickness();
     ray.dir = - ray.dir;
     MBVH->MOABBVH->unset_filter();
-    ErrorCode rval = MBVH->fireRay(volume, ray);
+    ErrorCode rval = MBVH->fireRay(ray);
     MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
     // distance should technically be zero if we've found a negative distance hit
@@ -383,7 +383,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
   MBRay ray(xyz, dir);
   ray.instID = volume;
   MBVH->MOABBVH->unset_filter();
-  rval = MBVH->fireRay(volume, ray);
+  rval = MBVH->fireRay(ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray using MBVH");
 
   CartVect ray_dir(dir);
@@ -407,7 +407,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
     aray.sum = 0;
     aray.num_hit = 0;
     MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)count_hits);
-    rval = MBVH->fireRay(volume, aray);
+    rval = MBVH->fireRay(ray);
     if( aray.num_hit == 0 ) { result = 0; return rval; }
     int hits = aray.num_hit;
     // reset and fire in negative direction
@@ -416,7 +416,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
     aray.tfar = inf;
     aray.tnear = 0.0;
     aray.dir = aray.dir * -1;
-    rval = MBVH->fireRay(volume, aray);
+    rval = MBVH->fireRay(aray);
     if (aray.num_hit == hits ) { result = 0; return rval; }
     
     // inside/outside depends on the sum
