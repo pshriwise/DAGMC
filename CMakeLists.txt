@@ -138,7 +138,9 @@ message(STATUS "DAG_LINK_LIBS: ${DAG_LINK_LIBS}")
 
 if(MBVH_FOUND)
   add_definitions(-DSIMD_BVH)
-  include_directories(${MBVH_INCLUDES})
+  link_directories(${MBVH_LIBRARY_DIRS})
+  include_directories(${MBVH_INCLUDE_DIRS})
+  list(APPEND DAG_LINK_LIBS ${MBVH_LIBRARIES})
 endif(MBVH_FOUND)
 
 
