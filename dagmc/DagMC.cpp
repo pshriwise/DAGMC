@@ -319,7 +319,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   }
   else {
     MBVH->MOABBVH->unset_filter();
-  }    
+  }
   rval = MBVH->fireRay(ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
@@ -489,7 +489,20 @@ ErrorCode DagMC::surface_sense(EntityHandle volume, EntityHandle surface,
 ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3],
                            const RayHistory* history) {
-  ErrorCode rval = GQT->get_normal(surf, in_pt, angle, history);
+  ErrorCode rval;
+#ifdef SIMD_BVH
+  MBRay ray(in_pt, {0.0, 0.0, 0.0});
+
+  rval = MBVH->closestToLocationSurf(ray);
+
+  angle[0] = ray.Ng[0];
+  angle[1] = ray.Ng[1];
+  angle[2] = ray.Ng[2];
+  
+  return MB_SUCCESS;
+#endif
+  
+  rval = GQT->get_normal(surf, in_pt, angle, history);
   return rval;
 }
 
