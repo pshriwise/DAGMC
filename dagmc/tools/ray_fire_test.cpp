@@ -43,7 +43,7 @@ static const double denomPI = PI * denom;
 
 inline void RNDVEC(CartVect& uvw, double& az) {
   // denom normalizes rand values (see global defines)
-  double theta = az * denom * rand(); // randomly samples from 0 to az. (Default az is 2PI)
+  double theta = 0.0 * denom * rand(); // randomly samples from 0 to az. (Default az is 2PI)
   double u = 2 * denom * rand() - 1; // randomly samples from -1 to 1.
   uvw[0] = sqrt(1 - u * u) * cos(theta);
   uvw[1] = sqrt(1 - u * u) * sin(theta);
@@ -63,9 +63,11 @@ static int num_random_rays = 1000;
 static int randseed = 12345;
 static bool do_stat_report = false;
 static bool do_trv_stats   = false;
-static double location_az = 2.0 * PI;
+static double location_az = 0.0 * PI;
 static double direction_az = location_az;
 static const char* pyfile = NULL;
+static bool ray_file = false;
+static const char* ray_filename = NULL;
 
 static int random_rays_missed = 0; // count of random rays that did not hit a surface
 
@@ -103,6 +105,7 @@ static void usage(const char* error, const char* opt, const char* name = "ray_fi
     str << "-D <real>  if present, limit random ray Direction to between +-<value> degrees" << std::endl;
     str << "           (unused if random ray radius < 0)" << std::endl;
     str << "-p <filename>  if present, save parameters and results to a python dictionary" << std::endl;
+    str << "-Z <filename>  if present, fire rays read from the specifiec .csv file (format: x,y,z,u,v,w)" << std::endl;
   }
 
   exit(error ? 1 : 0);
@@ -217,6 +220,10 @@ int main(int argc, char* argv[]) {
         case 'p':
           pyfile = get_option(i, argc, argv);
           break;
+        case 'F':
+ 	  ray_file = true;
+	  ray_filename = get_option(i, argc, argv);
+	  break;
       }
     } else {
       if (!filename) {
@@ -262,6 +269,60 @@ int main(int argc, char* argv[]) {
     return 2;
   }
 
+  /* Fire rays from CSV ray file */
+  if(ray_file) {
+    std::cout << "Firing rays found in CSV file. " << std::endl;
+    
+    // delimiter we're searching for in the CSV file
+    std::string comma = ",";
+
+    // open file
+    std::ifstream file(ray_filename);
+    // object for storing line and ray values
+    std::string line;
+    double r[6];
+
+    // loop over all lines in the file
+    while( file.good() ){
+      // extract the next line from the file
+      getline(file, line);
+      int index = 0;
+      // extract all ray values from the line
+      while( line.size() ) {
+	// make sure our index hasn't gotten too high
+	if( index >= 6 ) {
+	  std::cout << "Too many values found in a row of the CSV file." << std::endl;
+	  return 1;
+	}
+	// find the next comma
+	size_t it = line.find(comma);
+	// if no comma is found, assume we're at the end of the line,
+	// treating the remainder of the line as a value
+	if (it != std::string::npos) {
+	  // extract the value from the line and store
+	  std::string val = line.substr(0, it);
+	  r[index] = stod(val);
+	  // remove value and delimiter from the line
+	  line.erase(0, it + comma.length());
+	  // increment index
+	  index++;
+	}
+	else {
+	  // grab the last value in the line
+	  r[index] = stod(line);
+	  break;
+	}
+      }
+
+      ray_t ray;
+      ray.p = CartVect(r[0], r[1], r[2]);
+      ray.v = CartVect(r[0], r[1], r[2]);
+      rval = dagmc.ray_fire(vol, ray.p.array(), ray.v.array(), surf, dist, NULL, 0, 1, trv_stats);
+    }
+
+    return 0;
+  }
+  
   /* Fire any rays specified with -f flag */
   if (rays.size() > 0) {
 
