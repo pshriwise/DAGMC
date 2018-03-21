@@ -67,7 +67,7 @@ static double location_az = 0.0 * PI;
 static double direction_az = location_az;
 static const char* pyfile = NULL;
 static bool ray_file = false;
-static const char* ray_filename = NULL;
+static std::string ray_filename;
 
 static int random_rays_missed = 0; // count of random rays that did not hit a surface
 
@@ -271,7 +271,7 @@ int main(int argc, char* argv[]) {
 
   /* Fire rays from CSV ray file */
   if(ray_file) {
-    std::cout << "Firing rays found in CSV file. " << std::endl;
+    std::cout << "Firing rays found in CSV file: " << ray_filename << std::endl;
     
     // delimiter we're searching for in the CSV file
     std::string comma = ",";
@@ -316,7 +316,7 @@ int main(int argc, char* argv[]) {
 
       ray_t ray;
       ray.p = CartVect(r[0], r[1], r[2]);
-      ray.v = CartVect(r[0], r[1], r[2]);
+      ray.v = CartVect(r[3], r[4], r[5]);
       rval = dagmc.ray_fire(vol, ray.p.array(), ray.v.array(), surf, dist, NULL, 0, 1, trv_stats);
     }
 
