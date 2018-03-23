@@ -21,18 +21,6 @@
 #define MB_OBB_TREE_TAG_NAME "OBB_TREE"
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
-#define SDF_PRECONDITIONER
-
-#ifdef SDF_PRECONDITIONER
-#define SDF_BUILD
-//  #define SDF_WRITE
-//  #define SDF_RF
-//  #define SDF_DEBUG
-//  #define SDF_PIV
-//  #define SDF_CTL
-//  #define SDF_REPORT
-#endif
-
 namespace moab {
 
 /* Tolerance Summary
@@ -70,8 +58,13 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   defaultFacetingTolerance = .001;
 
 #ifdef SDF_REPORT
-  num_rays_fired = 0;
-  num_rays_preconditioned = 0;
+   num_geom_queries = 0;
+   num_ray_fire_queries = 0;
+   num_ray_fire_precond = 0;
+   num_point_in_volume_queries = 0;
+   num_point_in_volume_precond = 0;
+   num_closest_to_location_queries = 0;
+   num_closest_to_location_precond = 0;
 #endif
   
 }
@@ -1006,7 +999,7 @@ ErrorCode DagMC::precondition_point_in_volume(EntityHandle volume, const double 
 
 #ifdef SDF_REPORT
   num_geom_queries++;
-  num_point_in_volume_queried++;
+  num_point_in_volume_queries++;
   report_sdf_utl();
 #endif
   
@@ -1038,7 +1031,7 @@ ErrorCode DagMC::precondition_closest_to_location(EntityHandle volume, const dou
 
 #ifdef SDF_REPORT
   num_geom_queries++;
-  num_closest_to_location_queried++;
+  num_closest_to_location_queries++;
   report_sdf_utl();
 #endif
   
@@ -1091,7 +1084,7 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
                                        bool& preconditioned) {
 #ifdef SDF_REPORT
   num_geom_queries++;
-  num_ray_fire_queried++;
+  num_ray_fire_queries++;
   report_sdf_utl();
 #endif
 
