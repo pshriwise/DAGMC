@@ -30,6 +30,7 @@
 //  #define SDF_DEBUG
 //  #define SDF_PIV
 //  #define SDF_CTL
+//  #define SDF_REPORT
 #endif
 
 namespace moab {
@@ -67,6 +68,12 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
+
+#ifdef SDF_REPORT
+  num_rays_fired = 0;
+  num_rays_preconditioned = 0;
+#endif
+  
 }
 
 // Destructor
@@ -283,7 +290,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
   ErrorCode rval;
-
+  
 #ifdef SDF_RF
   bool precond_success;
   rval = precondition_ray_fire(volume, point, dir, user_dist_limit, next_surf, next_surf_dist, precond_success);
@@ -996,6 +1003,13 @@ ErrorCode DagMC::populate_preconditioner_for_volume(EntityHandle& vol, SignedDis
 }
 
 ErrorCode DagMC::precondition_point_in_volume(EntityHandle volume, const double xyz[3], int& result, bool& preconditioned) {
+
+#ifdef SDF_REPORT
+  num_geom_queries++;
+  num_point_in_volume_queried++;
+  report_sdf_utl();
+#endif
+  
   preconditioned = false;
   ErrorCode rval;
 
@@ -1011,12 +1025,23 @@ ErrorCode DagMC::precondition_point_in_volume(EntityHandle volume, const double 
     result = sdv > 0.0;
   }
 
+#ifdef SDF_REPORT
+  num_point_in_volume_precond++;
+#endif
+  
   return MB_SUCCESS;
 
 }
 
 
 ErrorCode DagMC::precondition_closest_to_location(EntityHandle volume, const double coords[3], double& result, bool& preconditioned) {
+
+#ifdef SDF_REPORT
+  num_geom_queries++;
+  num_closest_to_location_queried++;
+  report_sdf_utl();
+#endif
+  
   ErrorCode rval;
   preconditioned = false;
 
@@ -1032,6 +1057,10 @@ ErrorCode DagMC::precondition_closest_to_location(EntityHandle volume, const dou
     result = result - sdv_err;
   }
 
+#ifdef SDF_REPORT
+  if (preconditioned) { num_closest_to_location_precond++; }
+#endif
+  
   return MB_SUCCESS;
 }
 
@@ -1060,6 +1089,12 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
                                        EntityHandle& next_surf,
                                        double& next_surf_dist,
                                        bool& preconditioned) {
+#ifdef SDF_REPORT
+  num_geom_queries++;
+  num_ray_fire_queried++;
+  report_sdf_utl();
+#endif
+
   preconditioned = false;
   // calculate ray length and try to account for all space in between
   double ray_len = (CartVect(ray_start) - CartVect(ray_end)).length();
@@ -1102,6 +1137,10 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
     next_surf = surfs[0];
   }
 
+#ifdef SDF_REPORT
+  if(preconditioned) { num_ray_fire_precond++; }
+#endif
+  
   return MB_SUCCESS;
 }
 

@@ -146,6 +146,37 @@ class DagMC {
   /* SECTION II: Fundamental Geometry Operations/Queries */
  public:
 
+#ifdef SDF_REPORT
+  int num_geom_queries;
+  int num_ray_fire_queried;
+  int num_ray_fire_precond;
+  int num_point_in_volume_queries;
+  int num_point_in_volume_precond;
+  int num_closest_to_location_queries;
+  int num_closest_to_location_precond;
+  inline void report_sdf_utl() {
+    // report every 1M queries
+    if (num_geom_queries % 1E6) {
+      std::cout << "=======================" << std::endl;
+      std::cout << "DAGMC Geometry Queries: " << num_geom_queries << std::endl
+		<< "Rays Fired: " << num_ray_fire_queried << std::endl
+		<< "Rays Avoided: " << std::endl
+		<< "Ray Fire Utilization: " << (double)num_ray_fire_precond/(double)num_ray_fire_queried << std::endl
+		<< "Point in Volume Calls: " << num_point_in_volume_queries << std::endl
+		<< "Point in Volume Rays Avoided: " << num_point_in_volume_precond << std::endl
+		<< "Point in Volume Utilization: " << (double) num_point_in_volume_precond / (double) num_point_in_volume_queried << std::endl
+		<< "Closest to Location Calls: " << num_closest_to_location_queried << std::endl
+		<< "Closest to Location Rays Avoided: " << num_closest_to_location_precond << std::endl
+		<< "Closest to Location Utilization: "  << (double) num_closest_to_location_precond / (double) num_closest_to_location_queried << std::endl
+		<< "Overall Utilization: " << (double) (num_ray_fire_precond + num_point_in_volume_precond + num_closest_to_location_queried) / (double) num_geom_queries << std::endl
+		<< "=======================" << std::endl;
+	
+      
+	
+	}
+    return;
+  }
+#endif  
   /** The methods in this section are thin wrappers around methods in the
    *  GeometryQueryTool.
    */
