@@ -75,6 +75,10 @@ DagMC::~DagMC() {
   delete GTT;
   delete GQT;
 
+  for(int i = 0; i < sdfs.size() ; i++ ) {
+    delete sdfs[i];
+  }
+  
   // if we created the moab instance
   // clear it
   if (moab_instance_created) {
@@ -823,7 +827,7 @@ Tag DagMC::get_tag(const char* name, int size, TagType store,
 
 ErrorCode DagMC::build_preconditioner() {
   ErrorCode rval;
-
+  
   std::vector<std::string> keywords;
   std::string sdf = "sdf";
   keywords.push_back(sdf);
@@ -834,17 +838,10 @@ ErrorCode DagMC::build_preconditioner() {
   rval = entities_by_property(sdf, vols, 3);
   MB_CHK_SET_ERR(rval, "Failed to find signed distance field volumes");
 
-  // Range vols;
-  // const int three = 3;
-  // const void* const three_val[] = {&three};
-  // rval = MBI->get_entities_by_type_and_tag( 0, MBENTITYSET, &geomTag,
-  //                                           three_val, 1, vols );
-  // MB_CHK_SET_ERR(rval, "Could not get the model volumes.");
-
-  sdfs.resize(num_entities(3));
-
-  for (unsigned int i = 0; i < vols.size(); i++) {
-
+  sdfs.resize(num_entities(3) +1); // plus one due to 1 indexing of this vector
+  
+  for(unsigned int i = 0; i < vols.size(); i++) {
+    
     EntityHandle vol = vols[i];
 
     std::string val;
@@ -852,13 +849,10 @@ ErrorCode DagMC::build_preconditioner() {
     MB_CHK_SET_ERR(rval, "Could not get preconditioner step size from property tag");
     double sdf_step_size = std::atof(val.c_str());
 
-    // never need this for the implicit compliment
-    if (GTT->is_implicit_complement(vol))
-      continue;
-
     int vol_id = get_entity_id(vol);
 
     double x_min, x_max, y_min, y_max, z_min, z_max;
+    
     CartVect lower_corner, upper_corner;
     rval = getobb(vol, lower_corner.array(), upper_corner.array());
     MB_CHK_SET_ERR(rval, "Could not get volume bounds.");
@@ -905,7 +899,7 @@ ErrorCode DagMC::build_preconditioner() {
                                                        num_x_verts, num_y_verts, num_z_verts);
 
     MB_CHK_SET_ERR(rval, "Could not create preconditioner ScdBox.");
-
+    
     std::cout << "Populating preconditioner..." << std::endl;
     rval = populate_preconditioner_for_volume(vol, sdf);
     MB_CHK_SET_ERR(rval, "Could not populate preconditioner.");
@@ -916,6 +910,7 @@ ErrorCode DagMC::build_preconditioner() {
 }
 
 ErrorCode DagMC::populate_preconditioner_for_volume(EntityHandle& vol, SignedDistanceField* sdf) {
+
   ErrorCode rval;
 
   EntityHandle tree_root;
@@ -1009,6 +1004,7 @@ ErrorCode DagMC::precondition_point_in_volume(EntityHandle volume, const double 
   // retrieve the signed distance value from the field
   double sdv, sdv_err;
   rval = find_sdv(volume, xyz, sdv, sdv_err);
+  if( MB_ENTITY_NOT_FOUND == rval ) { return MB_SUCCESS; }
   MB_CHK_SET_ERR(rval, "Failed to retrieve signed distance value for volume " << get_entity_id(volume));
 
   // if the signed distance value is large enough,
@@ -1104,9 +1100,11 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
   double ssdv, ssdv_err, esdv, esdv_err;
 
   rval = find_sdv(volume, ray_start, ssdv, ssdv_err);
+  if( MB_ENTITY_NOT_FOUND == rval ) { return MB_SUCCESS; }
   MB_CHK_SET_ERR(rval, "Could not find start point sdv");
 
   rval = find_sdv(volume, ray_end, esdv, esdv_err);
+  if( MB_ENTITY_NOT_FOUND == rval ) { return MB_SUCCESS; }
   MB_CHK_SET_ERR(rval, "Could not find end point sdv");
 
   // if the starting point is outside of the volume, we have a problem, fire ray
@@ -1137,6 +1135,63 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
   return MB_SUCCESS;
 }
 
+  
+ErrorCode DagMC::precondition_closest_to_location( EntityHandle volume, const double coords[3], double& result) {
+  ErrorCode rval;
+  SignedDistanceField* sdf = get_signed_distance_field(volume);
+  rval = find_sdv(volume,coords,result);
+  if (MB_SUCCESS != rval && MB_ENTITY_NOT_FOUND != rval) return rval;
+
+  // check that the nearest intersection can be considered valid
+  // (is larger than interpolation error evaluation)
+  if ( MB_ENTITY_NOT_FOUND != rval && fabs(result) > sdf->get_err() && result > 0.0) {
+    result = result - sdf->get_err();
+  }
+  // if it is not, then return an errorcode indicating that this result
+  // shouldn't be used
+  else{
+    return MB_FAILURE;
+  }
+  
+  return MB_SUCCESS;
+}
+  
+/** precondition ray using physical distance limit */
+ErrorCode DagMC::precondition_ray(const EntityHandle volume,
+			   const double ray_start[3],
+			   const double ray_end[3],
+			   bool &fire_ray) {
+  ErrorCode rval;
+  fire_ray = true;
+  SignedDistanceField* sdf = get_signed_distance_field(volume);
+  
+  double ssdv, esdv;
+  
+  rval = find_sdv(volume,ray_start,ssdv);
+  if (MB_ENTITY_NOT_FOUND == rval) {
+    fire_ray = true;
+    return rval;
+  }
+  MB_CHK_SET_ERR(rval,"Could not find start point sdv");
+
+  rval = find_sdv(volume,ray_end,esdv);
+  if (MB_ENTITY_NOT_FOUND == rval) {
+    fire_ray = true;
+    return rval;
+  }
+  MB_CHK_SET_ERR(rval,"Could not find end point sdv");
+
+  // if the starting point is outside of the volume, we have a problem, fire ray
+  if(ssdv < 0) return MB_SUCCESS;
+  // end point is outside the volume, fire ray to get intersection distance and surf
+  if(esdv < 0) return MB_SUCCESS;
+  // calculate ray length and try to account for all space in between
+  double ray_len = (CartVect(ray_start)-CartVect(ray_end)).length();
+  if( (ray_len-ssdv-esdv) < -2*sdf->get_err() ) fire_ray = false;
+  
+  return MB_SUCCESS;
+}
+
 ErrorCode DagMC::find_sdv(const EntityHandle volume,
                           const double pnt[3],
                           double& sdv,
@@ -1154,6 +1209,14 @@ ErrorCode DagMC::find_sdv(const EntityHandle volume,
   return MB_SUCCESS;
 };
 
+ErrorCode DagMC::find_sdv(const EntityHandle volume,
+                          const double pnt[3],
+                          double& sdv ) {
+  ErrorCode rval;
+  double err;
+  return find_sdv(volume, pnt, sdv, err);
+};
+
 
 ErrorCode DagMC::get_sdf_err(const EntityHandle volume,
                              double& err) {
@@ -1162,8 +1225,9 @@ ErrorCode DagMC::get_sdf_err(const EntityHandle volume,
 }
 
 SignedDistanceField* DagMC::get_signed_distance_field(EntityHandle vol) {
-  if (index_by_handle(vol) > sdfs.size() - 1)
+  if (index_by_handle(vol) > sdfs.size() - 1 || sdfs.size() == 0) {
     return NULL;
+  }
   return sdfs[index_by_handle(vol)];
 }
 
