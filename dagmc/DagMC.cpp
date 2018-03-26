@@ -287,6 +287,13 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
   ErrorCode rval;
+
+#ifdef SDF_REPORT
+  num_geom_queries++;
+  num_ray_fire_queries++;
+  report_sdf_utl();
+#endif
+
   
 #ifdef SDF_RF
   bool precond_success;
@@ -1132,120 +1139,6 @@ ErrorCode DagMC::precondition_ray_fire(const EntityHandle volume,
 #ifdef SDF_REPORT
   if(preconditioned) { num_ray_fire_precond++; }
 #endif
-  
-  return MB_SUCCESS;
-}
-
-  
-ErrorCode DagMC::precondition_closest_to_location( EntityHandle volume, const double coords[3], double& result) {
-  ErrorCode rval;
-  SignedDistanceField* sdf = get_signed_distance_field(volume);
-  rval = find_sdv(volume,coords,result);
-  if (MB_SUCCESS != rval && MB_ENTITY_NOT_FOUND != rval) return rval;
-
-  // check that the nearest intersection can be considered valid
-  // (is larger than interpolation error evaluation)
-  if ( MB_ENTITY_NOT_FOUND != rval && fabs(result) > sdf->get_err() && result > 0.0) {
-    result = result - sdf->get_err();
-  }
-  // if it is not, then return an errorcode indicating that this result
-  // shouldn't be used
-  else{
-    return MB_FAILURE;
-  }
-  
-  return MB_SUCCESS;
-}
-  
-/** precondition ray using physical distance limit */
-ErrorCode DagMC::precondition_ray(const EntityHandle volume,
-			   const double ray_start[3],
-			   const double ray_end[3],
-			   bool &fire_ray) {
-  ErrorCode rval;
-  fire_ray = true;
-  SignedDistanceField* sdf = get_signed_distance_field(volume);
-  
-  double ssdv, esdv;
-  
-  rval = find_sdv(volume,ray_start,ssdv);
-  if (MB_ENTITY_NOT_FOUND == rval) {
-    fire_ray = true;
-    return rval;
-  }
-  MB_CHK_SET_ERR(rval,"Could not find start point sdv");
-
-  rval = find_sdv(volume,ray_end,esdv);
-  if (MB_ENTITY_NOT_FOUND == rval) {
-    fire_ray = true;
-    return rval;
-  }
-  MB_CHK_SET_ERR(rval,"Could not find end point sdv");
-
-  // if the starting point is outside of the volume, we have a problem, fire ray
-  if(ssdv < 0) return MB_SUCCESS;
-  // end point is outside the volume, fire ray to get intersection distance and surf
-  if(esdv < 0) return MB_SUCCESS;
-  // calculate ray length and try to account for all space in between
-  double ray_len = (CartVect(ray_start)-CartVect(ray_end)).length();
-  if( (ray_len-ssdv-esdv) < -2*sdf->get_err() ) fire_ray = false;
-  
-  return MB_SUCCESS;
-}
-
-  
-ErrorCode DagMC::precondition_closest_to_location( EntityHandle volume, const double coords[3], double& result) {
-  ErrorCode rval;
-  SignedDistanceField* sdf = get_signed_distance_field(volume);
-  rval = find_sdv(volume,coords,result);
-  if (MB_SUCCESS != rval && MB_ENTITY_NOT_FOUND != rval) return rval;
-
-  // check that the nearest intersection can be considered valid
-  // (is larger than interpolation error evaluation)
-  if ( MB_ENTITY_NOT_FOUND != rval && fabs(result) > sdf->get_err() && result > 0.0) {
-    result = result - sdf->get_err();
-  }
-  // if it is not, then return an errorcode indicating that this result
-  // shouldn't be used
-  else{
-    return MB_FAILURE;
-  }
-  
-  return MB_SUCCESS;
-}
-  
-/** precondition ray using physical distance limit */
-ErrorCode DagMC::precondition_ray(const EntityHandle volume,
-			   const double ray_start[3],
-			   const double ray_end[3],
-			   bool &fire_ray) {
-  ErrorCode rval;
-  fire_ray = true;
-  SignedDistanceField* sdf = get_signed_distance_field(volume);
-  
-  double ssdv, esdv;
-  
-  rval = find_sdv(volume,ray_start,ssdv);
-  if (MB_ENTITY_NOT_FOUND == rval) {
-    fire_ray = true;
-    return rval;
-  }
-  MB_CHK_SET_ERR(rval,"Could not find start point sdv");
-
-  rval = find_sdv(volume,ray_end,esdv);
-  if (MB_ENTITY_NOT_FOUND == rval) {
-    fire_ray = true;
-    return rval;
-  }
-  MB_CHK_SET_ERR(rval,"Could not find end point sdv");
-
-  // if the starting point is outside of the volume, we have a problem, fire ray
-  if(ssdv < 0) return MB_SUCCESS;
-  // end point is outside the volume, fire ray to get intersection distance and surf
-  if(esdv < 0) return MB_SUCCESS;
-  // calculate ray length and try to account for all space in between
-  double ray_len = (CartVect(ray_start)-CartVect(ray_end)).length();
-  if( (ray_len-ssdv-esdv) < -2*sdf->get_err() ) fire_ray = false;
   
   return MB_SUCCESS;
 }
