@@ -492,9 +492,10 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
   ErrorCode rval;
 #ifdef SIMD_BVH
   MBRay ray(in_pt, {0.0, 0.0, 0.0});
-
+  ray.geomID = surf;  
   rval = MBVH->closestToLocationSurf(ray);
 
+  
   angle[0] = ray.Ng[0];
   angle[1] = ray.Ng[1];
   angle[2] = ray.Ng[2];
