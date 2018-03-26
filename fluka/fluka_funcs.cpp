@@ -97,15 +97,15 @@ void g_step(double& pSx,
   double dir[3]   = {pV[0], pV[1], pV[2]};
 
 #ifdef SDF_PRECONDITIONER
-  bool preconditioned;
+  bool preconditioned = false;
   if(!state.on_boundary) { g_precond(oldReg, newReg, point, dir, propStep, retStep, preconditioned); }
   if(!preconditioned) {
 #endif
   
-  g_fire(oldReg, point, dir, propStep, retStep, saf, newReg); // fire a ray
+    g_fire(oldReg, point, dir, propStep, retStep, saf, newReg); // fire a ray
 
 #ifdef SDF_PRECONDITIONER
-  }
+   }
 #endif
 
   if (debug) {
@@ -520,6 +520,8 @@ void f_look(double& pSx, double& pSy, double& pSz,
     moab::EntityHandle volume = DAG->entity_by_index(3, i); // get the volume by index
     moab::ErrorCode rval;
 #ifdef SDF_PRECONDITIONER
+    if(debug) std::cout <<  "Preconditioning in f_look" << std::endl;
+    
     bool preconditioned = false;
     rval = DAG->precondition_point_in_volume(volume, xyz, is_inside, preconditioned);
     if(moab::MB_SUCCESS != rval)
@@ -527,13 +529,15 @@ void f_look(double& pSx, double& pSy, double& pSz,
     // if preconditioned, set next region and exit
     // if not, continue search
     if (preconditioned) {
+      if(debug) std::cout << "Preconditioing of f_look successful" << std::endl;
       if(is_inside) {
-	nextRegion = i;
-	flagErr = nextRegion;
-	return;
+    	nextRegion = i;
+    	flagErr = nextRegion;
+    	return;
       }
       else{
-	continue;
+    	if(debug) std::cout << "Preconditioing of f_look unsuccessful" << std::endl;
+    	continue;
       }
     }
 #endif
