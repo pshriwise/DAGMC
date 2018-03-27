@@ -55,7 +55,7 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
       std::cout << "=======================" << std::endl;
       std::cout << "DAGMC Geometry Queries: " << num_geom_queries << std::endl
 		<< "Rays Fired: " << num_ray_fire_queries << std::endl
-		<< "Rays Avoided: " << std::endl
+		<< "Rays Avoided: " << num_ray_fire_precond << std::endl
 		<< "Ray Fire Utilization: " << (double)num_ray_fire_precond/(double)num_ray_fire_queries << std::endl
 		<< "Point in Volume Calls: " << num_point_in_volume_queries << std::endl
 		<< "Point in Volume Rays Avoided: " << num_point_in_volume_precond << std::endl
@@ -1049,7 +1049,7 @@ ErrorCode DagMC::precondition_point_in_volume(EntityHandle volume, const double 
   }
 
 #ifdef SDF_REPORT
-  num_point_in_volume_precond++;
+  if(preconditioned) num_point_in_volume_precond++;
 #endif
   
   return MB_SUCCESS;
