@@ -43,7 +43,13 @@ static std::vector< DagMC::RayHistory > history_bank;
 static std::vector< DagMC::RayHistory > pblcm_history_stack;
 static bool visited_surface = false;
 
+
+#ifdef SDF_MCNP
+static bool use_dist_limit = true;
+#else
 static bool use_dist_limit = false;
+#endif
+
 static double dist_limit; // needs to be thread-local
 
 

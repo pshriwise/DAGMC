@@ -144,6 +144,8 @@ option(SDF_CLOSEST_TO_LOCATION "Enable signed distance field (SDF) preconditioni
 option(SDF_WRITE 	       "Write signed distance field data structures to file with the DAGMC mesh." 	   OFF)
 option(SDF_REPORT 	       "Report signed distance field usage" 						   OFF)
 option(SDF_FLUKA               "Enable signed distance field preconditioning for Fluka simulations."               OFF)
+option(SDF_MCNP                "Enable signed distance field preconditioning for MCNP  simulations."               OFF)
+
 # if the signed distance field is enabled, turn building on
 if(SIGNED_DISTANCE_FIELD)
   add_definitions(-DSDF_BUILD)
@@ -179,6 +181,10 @@ endif()
 
 if(SDF_FLUKA)
   add_definition(-DSDF_FLUKA)
+endif()
+
+if(SDF_MCNP)
+  add_definition(-DSDF_MCNP)
 endif()
 
 # Include UWUW in DAGMC library
