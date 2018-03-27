@@ -31,7 +31,7 @@ dagmcMetaData* DMD;
 
 static std::ostream* raystat_dump = NULL;
 
-#define SDF_PRECONDITIONER
+#define SDF_FLUKA
 
 #define ID_START 26
 
@@ -96,7 +96,7 @@ void g_step(double& pSx,
   double point[3] = {pSx, pSy, pSz};
   double dir[3]   = {pV[0], pV[1], pV[2]};
 
-#ifdef SDF_PRECONDITIONER
+#ifdef SDF_FLUKA
   bool preconditioned = false;
   if(!state.on_boundary) { g_precond(oldReg, newReg, point, dir, propStep, retStep, preconditioned); }
   if(!preconditioned) {
@@ -104,7 +104,7 @@ void g_step(double& pSx,
   
     g_fire(oldReg, point, dir, propStep, retStep, saf, newReg); // fire a ray
 
-#ifdef SDF_PRECONDITIONER
+#ifdef SDF_FLUKA
    }
 #endif
 
@@ -440,7 +440,7 @@ inline bool check_vol(double pos[3], double dir[3], int oldRegion) {
   // convert region id into entityhandle
   moab::EntityHandle volume = DAG->entity_by_index(3, oldRegion); // get the volume by index
   moab::ErrorCode rval;
-#ifdef SDF_PRECONDITIONER
+#ifdef SDF_FLUKA
   bool preconditioned = false;
   rval = DAG->precondition_point_in_volume(volume, pos, is_inside, preconditioned);
   if (moab::MB_SUCCESS != rval )
@@ -519,7 +519,7 @@ void f_look(double& pSx, double& pSy, double& pSz,
   for (int i = 1 ; i <= num_vols ; i++) { // loop over all volumes
     moab::EntityHandle volume = DAG->entity_by_index(3, i); // get the volume by index
     moab::ErrorCode rval;
-#ifdef SDF_PRECONDITIONER
+#ifdef SDF_FLUKA
     if(debug) std::cout <<  "Preconditioning in f_look" << std::endl;
     
     bool preconditioned = false;

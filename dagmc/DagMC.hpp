@@ -26,25 +26,6 @@ struct DagmcVolData {
   std::string comp_name;
 };
 
-#define SDF_PRECONDITIONER
-
-
-// SDF_PRECONDITIONING Options - uncomment any to apply
-#ifdef SDF_PRECONDITIONER
-// Build the SDF datastructures for tagged volumes
-//  #define SDF_BUILD
-// Write the SDF mesh to a vtk file when loading
-//  #define SDF_WRITE
-// Apply ray_fire preconditioniong
-//  #define SDF_RF
-// Apply point in volume preconditioning
-//  #define SDF_PIV
-// Apply closest to location preconditioning
-//  #define SDF_CTL
-// Report SDF Utilization during runtime
-//  #define SDF_REPORT
-#endif
-
 namespace moab {
 
 class CartVect;

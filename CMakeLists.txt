@@ -137,6 +137,50 @@ if (BUILD_FLUKA)
   add_subdirectory(fluka)
 endif (BUILD_FLUKA)
 
+option(SIGNED_DISTANCE_FIELD   "Enable signed distance field (SDF) preconditioning of geometry queries" 	   OFF)
+option(SDF_RAY_FIRE 	       "Enable signed distance field (SDF) preconditioning of ray fire queries" 	   OFF)
+option(SDF_POINT_IN_VOLUME     "Enable signed distance field (SDF) preconditioning of point in volume queries" 	   OFF)
+option(SDF_CLOSEST_TO_LOCATION "Enable signed distance field (SDF) preconditioning of closest to location queries" OFF)
+option(SDF_WRITE 	       "Write signed distance field data structures to file with the DAGMC mesh." 	   OFF)
+option(SDF_REPORT 	       "Report signed distance field usage" 						   OFF)
+option(SDF_FLUKA               "Enable signed distance field preconditioning for Fluka simulations."               OFF)
+# if the signed distance field is enabled, turn building on
+if(SIGNED_DISTANCE_FIELD)
+  add_definitions(-DSDF_BUILD)
+else()
+  message(STATUS "Signed Distance Field preconditioning disabled")
+  set(SDF_RAY_FIRE 	      OFF)
+  set(SDF_POINT_IN_VOLUME     OFF)
+  set(SDF_CLOSEST_TO_LOCATION OFF)
+  set(SDF_WRITE 	      OFF)
+  set(SDF_REPORT 	      OFF)
+  set(SDF_FLUKA               OFF)
+endif()
+
+if(SDF_RAY_FIRE)
+  add_definitions(-DSDF_RF)
+endif()
+
+if(SDF_POINT_IN_VOLUME)
+  add_definitions(-DSDF_PIV)
+endif()
+
+if(SDF_CLOSEST_TO_LOCATION)
+  add_definitions(-DSDF_CTL)
+endif()
+
+if(SDF_WRITE)
+  add_definitions(-DSDF_WRITE)
+endif()
+
+if(SDF_REPORT)
+  add_definitions(-DSDF_REPORT)
+endif()
+
+if(SDF_FLUKA)
+  add_definition(-DSDF_FLUKA)
+endif()
+
 # Include UWUW in DAGMC library
 add_subdirectory(uwuw)
 add_subdirectory(dagmc)
