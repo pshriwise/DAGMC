@@ -180,11 +180,11 @@ if(SDF_REPORT)
 endif()
 
 if(SDF_FLUKA)
-  add_definition(-DSDF_FLUKA)
+  add_definitions(-DSDF_FLUKA)
 endif()
 
 if(SDF_MCNP)
-  add_definition(-DSDF_MCNP)
+  add_definitions(-DSDF_MCNP)
 endif()
 
 # Include UWUW in DAGMC library
