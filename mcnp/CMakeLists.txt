@@ -2,6 +2,10 @@ message(STATUS "Building mcnpfuncs internal library")
 
 enable_language(Fortran)
 
+if(SDF_MCNP)
+  add_definitions(-DSDF_MCNP)
+endif()
+
 # Source files
 set(MCNP_FUNCS_SRC)
 list(APPEND MCNP_FUNCS_SRC mcnp_funcs.cpp)

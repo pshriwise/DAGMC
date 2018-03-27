@@ -2,6 +2,10 @@ message(STATUS "Building fludag library")
 
 enable_language(Fortran)
 
+if(SDF_FLUKA)
+  add_definitions(-DSDF_FLUKA)
+endif()
+
 # Source files
 set(SRC_FILES fluka_funcs.cpp)
 

@@ -38,6 +38,41 @@ const bool counting = false; /* controls counts of ray casts and pt_in_vols */
 // Empty synonym map for DagMC::parse_metadata()
 const std::map<std::string, std::string> DagMC::no_synonyms;
 
+
+#ifdef SDF_REPORT
+  int num_geom_queries;
+  int num_ray_fire_queries;
+  int num_ray_fire_precond;
+  int num_point_in_volume_queries;
+  int num_point_in_volume_precond;
+  int num_closest_to_location_queries;
+  int num_closest_to_location_precond;
+
+  // Writes SDF utilization to screen
+  inline void report_sdf_utl() {
+    // report every 1M queries
+    if (num_geom_queries % (int)1E6 == 0) {
+      std::cout << "=======================" << std::endl;
+      std::cout << "DAGMC Geometry Queries: " << num_geom_queries << std::endl
+		<< "Rays Fired: " << num_ray_fire_queries << std::endl
+		<< "Rays Avoided: " << std::endl
+		<< "Ray Fire Utilization: " << (double)num_ray_fire_precond/(double)num_ray_fire_queries << std::endl
+		<< "Point in Volume Calls: " << num_point_in_volume_queries << std::endl
+		<< "Point in Volume Rays Avoided: " << num_point_in_volume_precond << std::endl
+		<< "Point in Volume Utilization: " << (double) num_point_in_volume_precond / (double) num_point_in_volume_queries << std::endl
+		<< "Closest to Location Calls: " << num_closest_to_location_queries << std::endl
+		<< "Closest to Location Rays Avoided: " << num_closest_to_location_precond << std::endl
+		<< "Closest to Location Utilization: "  << (double) num_closest_to_location_precond / (double) num_closest_to_location_queries << std::endl
+		<< "Overall Utilization: " << (double) (num_ray_fire_precond + num_point_in_volume_precond + num_closest_to_location_queries) / (double) num_geom_queries << std::endl
+		<< "=======================" << std::endl;
+	
+      
+	
+	}
+    return;
+  }
+#endif
+  
 // DagMC Constructor
 DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision) {
   moab_instance_created = false;
@@ -57,15 +92,6 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
 
-#ifdef SDF_REPORT
-   num_geom_queries = 0;
-   num_ray_fire_queries = 0;
-   num_ray_fire_precond = 0;
-   num_point_in_volume_queries = 0;
-   num_point_in_volume_precond = 0;
-   num_closest_to_location_queries = 0;
-   num_closest_to_location_precond = 0;
-#endif
   
 }
 

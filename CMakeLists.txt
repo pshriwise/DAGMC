@@ -147,9 +147,7 @@ option(SDF_FLUKA               "Enable signed distance field preconditioning for
 option(SDF_MCNP                "Enable signed distance field preconditioning for MCNP  simulations."               OFF)
 
 # if the signed distance field is enabled, turn building on
-if(SIGNED_DISTANCE_FIELD)
-  add_definitions(-DSDF_BUILD)
-else()
+if(NOT SIGNED_DISTANCE_FIELD)
   message(STATUS "Signed Distance Field preconditioning disabled")
   set(SDF_RAY_FIRE 	      OFF)
   set(SDF_POINT_IN_VOLUME     OFF)
@@ -157,34 +155,6 @@ else()
   set(SDF_WRITE 	      OFF)
   set(SDF_REPORT 	      OFF)
   set(SDF_FLUKA               OFF)
-endif()
-
-if(SDF_RAY_FIRE)
-  add_definitions(-DSDF_RF)
-endif()
-
-if(SDF_POINT_IN_VOLUME)
-  add_definitions(-DSDF_PIV)
-endif()
-
-if(SDF_CLOSEST_TO_LOCATION)
-  add_definitions(-DSDF_CTL)
-endif()
-
-if(SDF_WRITE)
-  add_definitions(-DSDF_WRITE)
-endif()
-
-if(SDF_REPORT)
-  add_definitions(-DSDF_REPORT)
-endif()
-
-if(SDF_FLUKA)
-  add_definitions(-DSDF_FLUKA)
-endif()
-
-if(SDF_MCNP)
-  add_definitions(-DSDF_MCNP)
 endif()
 
 # Include UWUW in DAGMC library

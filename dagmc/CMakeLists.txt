@@ -1,5 +1,31 @@
 message(STATUS "Building DAGMC library")
 
+# signed distance field options
+if(SIGNED_DISTANCE_FIELD)
+  add_definitions(-DSDF_BUILD)
+endif()
+
+if(SDF_RAY_FIRE)
+  add_definitions(-DSDF_RF)
+endif()
+
+if(SDF_POINT_IN_VOLUME)
+  add_definitions(-DSDF_PIV)
+endif()
+
+if(SDF_CLOSEST_TO_LOCATION)
+  add_definitions(-DSDF_CTL)
+endif()
+
+if(SDF_WRITE)
+  add_definitions(-DSDF_WRITE)
+endif()
+
+if(SDF_REPORT)
+  add_definitions(-DSDF_REPORT)
+endif()
+
+
 # Configure version header
 configure_file(DagMCVersion.hpp.in DagMCVersion.hpp)
 list(APPEND DAGMC_PUB_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/DagMCVersion.hpp)
