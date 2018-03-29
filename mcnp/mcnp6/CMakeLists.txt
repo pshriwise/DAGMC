@@ -8,6 +8,10 @@ macro (DATETIME RESULT)
 endmacro (DATETIME)
 DATETIME(DATE)
 
+if(SDF_MCNP)
+  add_definitions(-DSDF_MCNP)
+endif()
+
 # Source files
 set(MCNP_SRC_FILES)
 file(GLOB MCNP_SRC_FILES ${MCNP_SRC_FILES} "Source/dedx/*.F90")
