@@ -345,6 +345,10 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
     next_surf = 0;
   }
 
+  if( history ) {
+    history->prev_facets.push_back(ray.primID);
+  }
+  
   return rval;
   
 #endif
