@@ -459,6 +459,7 @@ ErrorCode DagMC::point_in_volume_slow(EntityHandle volume, const double xyz[3],
 ErrorCode DagMC::closest_to_location(EntityHandle volume,
                                      const double coords[3], double& result,
                                      EntityHandle* surface) {
+  
   ErrorCode rval = GQT->closest_to_location(volume, coords, result, surface);
   return rval;
 }
@@ -495,6 +496,32 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            const RayHistory* history) {
   ErrorCode rval;
 #ifdef SIMD_BVH
+
+  if ( history && history->prev_facets.size() ){
+    CartVect coords[3], normal(0.0);
+    const EntityHandle* conn;
+    int len = 0;
+    EntityHandle facet = history->prev_facets.back();
+    
+    rval = MBI->get_connectivity( facet, conn, len );
+    MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
+    if(3 != len) {
+      MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
+    }
+ 
+    rval = MBI->get_coords( conn, 3, coords[0].array() );
+    MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
+
+    coords[1] -= coords[0];
+    coords[2] -= coords[0];
+    normal += coords[1] * coords[2];
+
+    normal.normalize();
+    normal.get( angle );
+
+    return MB_SUCCESS;
+  }
+  
   MBRay ray(in_pt, {0.0, 0.0, 0.0});
   ray.geomID = surf;  
   rval = MBVH->closestToLocationSurf(ray);
