@@ -29,8 +29,34 @@ struct DagmcVolData {
   std::string comp_name;
 };
 
-struct MBRayAccum : MBRay { int sum; int num_hit; };
+struct MBRayAccum : MBRay {
+ inline MBRayAccum() {
+    tnear = 0.0;
+    tfar = 1E37;
+    mask = -1;
+    geomID = -1;
+    primID = -1;
+    instID = -1;
+    sum = 0;
+    num_hit = 0;
+  }
+  
+  int sum; int num_hit;};
 
+struct MBRaywHist : MBRay {
+  inline MBRaywHist() {
+    tnear = 0.0;
+    tfar = 1E37;
+    mask = -1;
+    geomID = -1;
+    primID = -1;
+    instID = -1;
+    prev_facets = NULL;
+  }
+
+  std::vector<moab::EntityHandle>* prev_facets;
+  
+};
 
 namespace moab {
 
