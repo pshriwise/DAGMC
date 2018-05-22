@@ -29,9 +29,39 @@ double dot_prod(MBRay ray) {
   return ray_dir % tri_norm;
 }
 
-void backface_cull(MBRay &ray, void*) {
+bool in_facets(MBRaywHist ray, moab::EntityHandle tri) {
+  if ( ray.prev_facets && std::find(ray.prev_facets->begin(), ray.prev_facets->end(), tri) != ray.prev_facets->end() ) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+    
 
+void backface_cull(MBRaywHist &ray, void*) {
+
+  if( in_facets(ray, ray.primID) ) {
+    ray.geomID = -1;
+    ray.primID = -1;
+  }
+      
   if(dot_prod(ray) < 0.0) {
+    ray.geomID = -1;
+    ray.primID = -1;
+  }
+
+  return;
+}
+
+void frontface_cull(MBRaywHist &ray, void*) {
+
+  if( in_facets(ray, ray.primID) ) {
+    ray.geomID = -1;
+    ray.primID = -1;
+  }
+
+  if(dot_prod(ray) > 0.0) {
     ray.geomID = -1;
     ray.primID = -1;
   }
@@ -236,8 +266,8 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  // rval = setup_obbs();
-  //MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+  rval = setup_obbs();
+  MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
   rval = setup_indices();
@@ -312,39 +342,128 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 
 #ifdef SIMD_BVH
   
-  MBRay ray(point, dir);
+  MBRaywHist ray;
+  ray.org = point;
+  ray.dir = dir;
   ray.instID = volume;
-  if(ray_orientation == 1) {
-    MBVH->MOABBVH->set_filter(backface_cull);
+  ray.tfar = 1E37;
+  ray.geomID = -1;
+  ray.primID = -1;
+
+  if ( history ) {
+    ray.prev_facets = &(history->prev_facets);
+  }
+
+  if ( ray_orientation == 1) {
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)backface_cull);
+  }
+  else if ( ray_orientation == -1 ) {
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)frontface_cull);
   }
   else {
     MBVH->MOABBVH->unset_filter();
   }
+    
   rval = MBVH->fireRay(ray);
   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
 
-  // if we missed, check behind for a hit
-  if( ray.geomID == -1 && GQT->get_overlap_thickness() != 0.0 ) {
-    ray.tnear = 1e-06;
-    ray.tfar = GQT->get_overlap_thickness();
-    ray.dir = - ray.dir;
+  // fire a ray in the opposite direction
+  if ( ray_orientation == 1 ) {
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)frontface_cull);
+  }
+  else if ( ray_orientation == -1 ) {
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)backface_cull);
+  }
+  else {
     MBVH->MOABBVH->unset_filter();
-    ErrorCode rval = MBVH->fireRay(ray);
-    MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
-
-    // distance should technically be zero if we've found a negative distance hit
-    ray.tfar = 0;
   }
 
-  if ( ray.geomID != -1) {
+  // check behind the ray origin for intersections
+  double neg_ray_len;
+  if(0 == GQT->get_overlap_thickness()) {
+    neg_ray_len = GQT->get_numerical_precision();
+  } else {
+    neg_ray_len = GQT->get_overlap_thickness();
+  }
+
+  MBRaywHist neg_ray;
+  neg_ray.org = point;
+  neg_ray.dir = dir;
+  neg_ray.instID = volume;
+  neg_ray.geomID = -1;
+  neg_ray.primID = -1;
+  if( history ) {
+    neg_ray.prev_facets = &(history->prev_facets);
+  }
+  neg_ray.tfar = neg_ray_len;
+
+  rval = MBVH->fireRay(neg_ray);
+
+  bool use_neg_intersection = false;
+  // If an RTI is found at negative distance, perform a PMT to see if the
+  // particle is inside an overlap.
+  if(neg_ray.geomID != -1) {
+        // get the next volume
+    std::vector<EntityHandle> vols;
+    EntityHandle nx_vol;
+    rval = MBI->get_parent_meshsets( neg_ray.geomID, vols );
+    MB_CHK_SET_ERR(rval, "Failed to get the parent meshsets");
+    if(2 != vols.size()) {
+      MB_SET_ERR(MB_FAILURE, "Invaid number of parent volumes found");
+    }
+    if(vols.front() == volume) {
+      nx_vol = vols.back();
+    } else {
+      nx_vol = vols.front();
+    }
+
+    int result;
+    rval = point_in_volume( nx_vol, point, result, dir, history );
+    MB_CHK_SET_ERR(rval, "Point in volume query failed");
+    if(1==result) use_neg_intersection = true;
+  }
+  
+  // // if we missed, check behind for a hit
+  // if( ray.geomID == -1 && GQT->get_overlap_thickness() != 0.0 ) {
+  //   ray.tnear = 1e-06;
+  //   ray.tfar = GQT->get_overlap_thickness();
+  //   ray.dir = - ray.dir;
+  //   MBVH->MOABBVH->unset_filter();
+  //   ErrorCode rval = MBVH->fireRay(ray);
+  //   MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
+
+  //   // distance should technically be zero if we've found a negative distance hit
+  //   ray.tfar = 0;
+  // }
+
+  if(use_neg_intersection) {
+    next_surf_dist = 0;
+    next_surf = neg_ray.geomID;
+  }
+  else if ( ray.geomID != -1) {
     next_surf_dist = ray.tfar;
     next_surf = ray.geomID;
   }
   else {
-    next_surf_dist = ray.tfar;
+    next_surf_dist = 1E37;
     next_surf = 0;
   }
 
+  // std::cout << next_surf_dist << std::endl;
+
+  // double next_surf_dist_gqt;
+  // moab::EntityHandle next_surf_gqt;
+  // RayHistory dup_hist = *history;
+  
+  // rval = GQT->ray_fire(volume, point, dir, next_surf_gqt, next_surf_dist_gqt,
+  // 		       history ? &dup_hist : NULL, user_dist_limit, ray_orientation,
+  //                                 stats);
+
+
+  // std::cout << next_surf_dist_gqt << std::endl;
+
+  // assert(next_surf_dist_gqt == next_surf_dist);
+  
   if( history ) {
     history->prev_facets.push_back(ray.primID);
   }
@@ -365,6 +484,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  const RayHistory* history) {
   ErrorCode rval = MB_SUCCESS;
 #ifdef SIMD_BVH
+  
   double dir[3] { 0.0, 0.0, 0.0 };
 
   if ( uvw ) {
@@ -495,44 +615,45 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3],
                            const RayHistory* history) {
   ErrorCode rval;
-#ifdef SIMD_BVH
+// #ifdef SIMD_BVH
 
-  if ( history && history->prev_facets.size() ){
-    CartVect coords[3], normal(0.0);
-    const EntityHandle* conn;
-    int len = 0;
-    EntityHandle facet = history->prev_facets.back();
+//   if ( history && history->prev_facets.size() ){
+
+//     CartVect coords[3], normal(0.0);
+//     const EntityHandle* conn;
+//     int len = 0;
+//     EntityHandle facet = history->prev_facets.back();
     
-    rval = MBI->get_connectivity( facet, conn, len );
-    MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
-    if(3 != len) {
-      MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
-    }
+//     rval = MBI->get_connectivity( facet, conn, len );
+//     MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
+//     if(3 != len) {
+//       MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
+//     }
  
-    rval = MBI->get_coords( conn, 3, coords[0].array() );
-    MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
+//     rval = MBI->get_coords( conn, 3, coords[0].array() );
+//     MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
 
-    coords[1] -= coords[0];
-    coords[2] -= coords[0];
-    normal += coords[1] * coords[2];
+//     coords[1] -= coords[0];
+//     coords[2] -= coords[0];
+//     normal += coords[1] * coords[2];
 
-    normal.normalize();
-    normal.get( angle );
+//     normal.normalize();
+//     normal.get( angle );
 
-    return MB_SUCCESS;
-  }
+//     return MB_SUCCESS;
+    
+//   }
   
-  MBRay ray(in_pt, {0.0, 0.0, 0.0});
-  ray.geomID = surf;  
-  rval = MBVH->closestToLocationSurf(ray);
-
+//   MBRay ray(in_pt, {0.0, 0.0, 0.0});
+//   ray.geomID = surf;  
+//   rval = MBVH->closestToLocationSurf(ray);
   
-  angle[0] = ray.Ng[0];
-  angle[1] = ray.Ng[1];
-  angle[2] = ray.Ng[2];
+//   angle[0] = ray.Ng[0];
+//   angle[1] = ray.Ng[1];
+//   angle[2] = ray.Ng[2];
   
-  return MB_SUCCESS;
-#endif
+//   return MB_SUCCESS;
+// #endif
   
   rval = GQT->get_normal(surf, in_pt, angle, history);
   return rval;
