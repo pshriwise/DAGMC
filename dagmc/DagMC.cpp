@@ -346,6 +346,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   ray.org = point;
   ray.dir = dir;
   ray.instID = volume;
+  ray.tnear = 0.0;
   ray.tfar = 1E37;
   ray.geomID = -1;
   ray.primID = -1;
@@ -389,14 +390,17 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   MBRaywHist neg_ray;
   neg_ray.org = point;
   neg_ray.dir = dir;
+  neg_ray.dir *= -1;
+  neg_ray.tnear = 0.0;
   neg_ray.instID = volume;
   neg_ray.geomID = -1;
   neg_ray.primID = -1;
   if( history ) {
     neg_ray.prev_facets = &(history->prev_facets);
   }
+  
   neg_ray.tfar = neg_ray_len;
-
+  
   rval = MBVH->fireRay(neg_ray);
 
   bool use_neg_intersection = false;
@@ -465,7 +469,12 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   // assert(next_surf_dist_gqt == next_surf_dist);
   
   if( history ) {
-    history->prev_facets.push_back(ray.primID);
+    if(use_neg_intersection) {
+      history->prev_facets.push_back(neg_ray.primID);
+    }
+    else { 
+      history->prev_facets.push_back(ray.primID);
+    }
   }
   
   return rval;
