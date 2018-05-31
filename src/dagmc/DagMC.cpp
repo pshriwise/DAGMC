@@ -266,8 +266,8 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  rval = setup_obbs();
-  MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+  // rval = setup_obbs();
+  // MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
   rval = setup_indices();
@@ -624,45 +624,45 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3],
                            const RayHistory* history) {
   ErrorCode rval;
-// #ifdef SIMD_BVH
+#ifdef SIMD_BVH
 
-//   if ( history && history->prev_facets.size() ){
+  if ( history && history->prev_facets.size() ){
 
-//     CartVect coords[3], normal(0.0);
-//     const EntityHandle* conn;
-//     int len = 0;
-//     EntityHandle facet = history->prev_facets.back();
+    CartVect coords[3], normal(0.0);
+    const EntityHandle* conn;
+    int len = 0;
+    EntityHandle facet = history->prev_facets.back();
     
-//     rval = MBI->get_connectivity( facet, conn, len );
-//     MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
-//     if(3 != len) {
-//       MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
-//     }
+    rval = MBI->get_connectivity( facet, conn, len );
+    MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
+    if(3 != len) {
+      MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
+    }
  
-//     rval = MBI->get_coords( conn, 3, coords[0].array() );
-//     MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
+    rval = MBI->get_coords( conn, 3, coords[0].array() );
+    MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
 
-//     coords[1] -= coords[0];
-//     coords[2] -= coords[0];
-//     normal += coords[1] * coords[2];
+    coords[1] -= coords[0];
+    coords[2] -= coords[0];
+    normal += coords[1] * coords[2];
 
-//     normal.normalize();
-//     normal.get( angle );
+    normal.normalize();
+    normal.get( angle );
 
-//     return MB_SUCCESS;
+    return MB_SUCCESS;
     
-//   }
+  }
   
-//   MBRay ray(in_pt, {0.0, 0.0, 0.0});
-//   ray.geomID = surf;  
-//   rval = MBVH->closestToLocationSurf(ray);
+  MBRay ray(in_pt, {0.0, 0.0, 0.0});
+  ray.geomID = surf;  
+  rval = MBVH->closestToLocationSurf(ray);
   
-//   angle[0] = ray.Ng[0];
-//   angle[1] = ray.Ng[1];
-//   angle[2] = ray.Ng[2];
+  angle[0] = ray.Ng[0];
+  angle[1] = ray.Ng[1];
+  angle[2] = ray.Ng[2];
   
-//   return MB_SUCCESS;
-// #endif
+  return MB_SUCCESS;
+#endif
   
   rval = GQT->get_normal(surf, in_pt, angle, history);
   return rval;
