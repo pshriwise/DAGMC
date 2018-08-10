@@ -266,8 +266,8 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  // rval = setup_obbs();
-  // MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+  //  rval = setup_obbs();
+  //  MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
   rval = setup_indices();
@@ -347,7 +347,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
   ray.dir = dir;
   ray.instID = volume;
   ray.tnear = 0.0;
-  ray.tfar = 1E37;
+  ray.tfar = user_dist_limit > 0.0 ? user_dist_limit : 1E37;
   ray.geomID = -1;
   ray.primID = -1;
 
@@ -389,8 +389,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 
   MBRaywHist neg_ray;
   neg_ray.org = point;
-  neg_ray.dir = dir;
-  neg_ray.dir *= -1;
+  neg_ray.dir = -ray.dir;
   neg_ray.tnear = 0.0;
   neg_ray.instID = volume;
   neg_ray.geomID = -1;
@@ -588,8 +587,21 @@ ErrorCode DagMC::point_in_volume_slow(EntityHandle volume, const double xyz[3],
 ErrorCode DagMC::closest_to_location(EntityHandle volume,
                                      const double coords[3], double& result,
                                      EntityHandle* surface) {
+  ErrorCode rval;
   
-  ErrorCode rval = GQT->closest_to_location(volume, coords, result, surface);
+  #ifdef SIMD_BVH
+  MBRay ray(coords, {0.0, 0.0, 0.0});
+  ray.instID = volume;
+  
+  rval = MBVH->closestToLocation(ray);
+  
+  result = ray.tfar;
+  if( surface ) *surface = ray.geomID;
+
+  return MB_SUCCESS;
+  #endif
+  
+  rval = GQT->closest_to_location(volume, coords, result, surface);
   return rval;
 }
 
