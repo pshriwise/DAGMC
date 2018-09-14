@@ -4,15 +4,13 @@
 #include <fstream>
 
 // useful functions
-bool file_exists(std::string filename)
-{
+bool file_exists(std::string filename) {
   //this function returns true if a file can be opened
   std::ifstream ifile(filename.c_str());
   return (bool)ifile; // casts file object to a boolean
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 
   ProgOptions po("uwuw_preproc: a tool for preprocessing DAGMC files to incorporate UWUW workflow information");
 
@@ -40,7 +38,7 @@ int main(int argc, char* argv[])
     std::cout << "You need to set the PyNE material library filename" << std::endl;
     exit(1);
   } else if (file_exists(lib_file)) {
-    std::cout <<"Will read materials from file: "<< lib_file << std::endl;
+    std::cout << "Will read materials from file: " << lib_file << std::endl;
   } else {
     std::cout << "Cannot open the material library filename:" << lib_file << std::endl;
     exit(1);
