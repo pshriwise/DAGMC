@@ -1,8 +1,11 @@
 #include "DagMC.hpp"
+#include "moab/OrientedBoxTreeTool.hpp"
 #include "moab/Core.hpp"
 
 #ifndef THREAD_MANAGER_HPP
 #define THREAD_MANAGER_HPP 1
+
+namespace DagMC {
 
 // Struct for storage of ray state
 class DagMCRayState {
@@ -33,8 +36,14 @@ class DagMCRayState {
 
 class DagThreadManager {
  public:
-  DagThreadManager(int num_threads, moab::Interface* MBI = NULL);
-  DagThreadManager(moab::Interface* MBI = NULL);
+  DagThreadManager(moab::Interface* MBI = NULL, int num_threads = 1, 
+                   const double overlap_tolerance = 0.,
+                   const double p_numerical_precision = 1.e-3);
+
+  DagThreadManager(moab::GeomTopoTool *gtt, int num_threads = 1,
+                   const double overlap_tolerance = 0., 
+                   const double p_numerical_precision = 1.e-3);
+
   ~DagThreadManager();
 
   // setup the dagmc state for the threads
@@ -42,10 +51,62 @@ class DagThreadManager {
 
   void initialise_child_threads();
 
-  void set_num_threads(int thread_count);
+  void set_num_threads(const int thread_count);
 
+  moab::ErrorCode load_file(const char* cfile);
+
+  moab::ErrorCode init_OBBTree();
+
+  moab::ErrorCode ray_fire(const moab::EntityHandle volume,
+					       const double ray_start[3],
+					       const double ray_dir[3],
+					       moab::EntityHandle &next_surf,
+					       double &next_surf_dist,
+					       const int thread_idx = 0,
+					       bool use_ray_history = false,
+					       double dist_limit = 0.,
+					       int ray_orientation = 1,
+					       moab::OrientedBoxTreeTool::TrvStats* stats = NULL);
+
+  moab::ErrorCode  point_in_volume(const moab::EntityHandle volume,
+				  const double xyz[3],
+				  int &result,
+				  const int thread_id = 0,
+				  const double* uvw = NULL,
+				  bool use_history = false);
+
+  moab::ErrorCode point_in_volume_slow(const moab::EntityHandle volume,
+				  const double xyz[3],
+				  int &result,
+				  const int thread_id = 0);        
+
+  moab::ErrorCode closest_to_location(const moab::EntityHandle volume,
+				  const double coords[3],
+				  double &result,
+				  moab::EntityHandle *surface,
+				  const int thread_id = 0);
+
+  moab::ErrorCode test_volume_boundary(const moab::EntityHandle volume,
+				       const moab::EntityHandle surface,
+				       const double xyz[3],
+				       const double uvw[3],
+				       int &result,
+				       const int thread_idx = 0,
+				       const bool use_history = false);
+
+  moab::ErrorCode get_angle(const moab::EntityHandle surf, 
+                            const double xyz[3],
+			                      double angle[3], 
+                            const int thread_idx, 
+                            const bool use_history);
+
+  moab::ErrorCode reset_history(const int thread_idx);
+
+  moab::ErrorCode rollback_history(const int thread_idx);
+
+  private:
   // get the dagmc instance for a given thread
-  inline moab::DagMC* get_dagmc_instance(int thread_id) {
+  inline moab::DagMC* get_dagmc_instance(const int thread_id) {
     return dagmc_instances[thread_id];
   }
 
@@ -60,6 +121,13 @@ class DagThreadManager {
   std::vector<DagMCRayState*> dagmc_rayhistories; ///< vector to the associated ray history
   moab::Interface* MOAB; ///< moab pointer
   moab::GeomTopoTool *GTT; ///< GTT Pointer
+  double overlap_tolerance; ///< overlap tolerance
+  double numerical_precision; ///< numerical precision
+  double defaultFacetingTolerance;
+
+  bool moab_instance_created;
+  bool gtt_instance_created;
 };
 
+} // end of namespace
 #endif
