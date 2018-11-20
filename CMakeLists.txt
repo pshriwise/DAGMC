@@ -17,7 +17,7 @@ dagmc_setup_options()
 
 find_package(MOAB REQUIRED)
 
-dagmc_setup_flags()
+find_package(dd REQUIRED)
 
 if (BUILD_TESTS)
   enable_testing()

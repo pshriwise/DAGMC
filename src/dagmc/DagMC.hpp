@@ -12,6 +12,8 @@
 #include "moab/GeomQueryTool.hpp"
 #include "DagMCVersion.hpp"
 
+#include "RTI.hpp"
+
 #include <vector>
 #include <map>
 #include <string>

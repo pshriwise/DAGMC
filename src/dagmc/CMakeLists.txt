@@ -13,6 +13,8 @@ set(LINK_LIBS_EXTERN_NAMES MOAB_LIBRARIES HDF5_LIBRARIES)
 include_directories(${CMAKE_BINARY_DIR}/src/dagmc)
 
 dagmc_install_library(dagmc)
+target_link_libraries(dagmc-shared PUBLIC dd)
+target_link_libraries(dagmc-static PUBLIC dd)
 
 add_subdirectory(tools)
 
