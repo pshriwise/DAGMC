@@ -394,6 +394,7 @@ class DagMC {
 
   GeomTopoTool* GTT;
   GeomQueryTool* GQT;
+  RayTracingInterface* RTI;
 
  public:
   Tag  nameTag, facetingTolTag;

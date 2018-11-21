@@ -53,6 +53,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   // make new GeomTopoTool and GeomQueryTool
   GTT = new moab::GeomTopoTool(MBI, false);
   GQT = new moab::GeomQueryTool(GTT, overlap_tolerance, p_numerical_precision);
+  RTI = new RayTracingInterface(MBI);
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -254,9 +255,11 @@ ErrorCode DagMC::finish_loading() {
 
   std::cout << "Using faceting tolerance: " << facetingTolerance << std::endl;
 
+  rval = RTI->init();
+  MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
+  
   return MB_SUCCESS;
 }
-
 
 /* SECTION II: Fundamental Geometry Operations/Queries */
 
@@ -266,10 +269,12 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
-                                 history, user_dist_limit, ray_orientation,
-                                 stats);
-  return rval;
+  RTI->dag_ray_fire(volume, point, dir, next_surf, next_surf_dist,
+                                 history, user_dist_limit, ray_orientation);
+  // ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+  //                                history, user_dist_limit, ray_orientation,
+  //                                stats);
+  return MB_SUCCESS;
 }
 
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
