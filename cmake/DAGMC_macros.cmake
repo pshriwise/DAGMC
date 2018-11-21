@@ -204,7 +204,7 @@ macro (dagmc_install_library lib_name)
     foreach(lib ${LINK_LIBS_SHARED})
       target_link_libraries(${lib_name}-shared PUBLIC ${lib})
     endforeach ()
-    target_include_directories(${lib_name}-shared ${INC_DIRS})
+    target_include_directories(${lib_name}-shared PUBLIC ${INC_DIRS})
     install(TARGETS ${lib_name}-shared
             LIBRARY DESTINATION ${INSTALL_LIB_DIR}
             PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
@@ -221,7 +221,7 @@ macro (dagmc_install_library lib_name)
     foreach(lib ${LINK_LIBS_STATIC})
       target_link_libraries(${lib_name}-static PUBLIC ${lib})
     endforeach ()
-    target_include_directories(${lib_name}-static ${INC_DIRS})
+    target_include_directories(${lib_name}-static PUBLIC ${INC_DIRS})
     install(TARGETS ${lib_name}-static
       ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
       PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
