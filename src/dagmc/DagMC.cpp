@@ -201,7 +201,7 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  rval = setup_obbs();
+  //  rval = setup_obbs();
   MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
@@ -269,8 +269,10 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  RTI->dag_ray_fire(volume, point, dir, next_surf, next_surf_dist,
+  int surf_idx;
+  RTI->dag_ray_fire(volume, point, dir, surf_idx, next_surf_dist,
                                  history, user_dist_limit, ray_orientation);
+  next_surf = entity_by_index(2, surf_idx+1);
   // ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
   //                                history, user_dist_limit, ray_orientation,
   //                                stats);
