@@ -18,6 +18,8 @@ dagmc_setup_options()
 find_package(MOAB REQUIRED)
 
 find_package(dd REQUIRED)
+set(DD_SHARED dd)
+set(DD_STATIC dd)
 
 if (BUILD_TESTS)
   enable_testing()

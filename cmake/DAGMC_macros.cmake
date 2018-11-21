@@ -193,15 +193,18 @@ macro (dagmc_install_library lib_name)
 
   if (BUILD_SHARED_LIBS)
     add_library(${lib_name}-shared SHARED ${SRC_FILES})
-      set_target_properties(${lib_name}-shared
-        PROPERTIES OUTPUT_NAME ${lib_name}
-                   PUBLIC_HEADER "${PUB_HEADERS}")
+    set_target_properties(${lib_name}-shared
+      PROPERTIES OUTPUT_NAME ${lib_name}
+      PUBLIC_HEADER "${PUB_HEADERS}")
     if (BUILD_RPATH)
       set_target_properties(${lib_name}-shared
         PROPERTIES INSTALL_RPATH "${INSTALL_RPATH_DIRS}"
                    INSTALL_RPATH_USE_LINK_PATH TRUE)
     endif ()
-    target_link_libraries(${lib_name}-shared ${LINK_LIBS_SHARED})
+    foreach(lib ${LINK_LIBS_SHARED})
+      target_link_libraries(${lib_name}-shared PUBLIC ${lib})
+    endforeach ()
+    target_include_directories(${lib_name}-shared ${INC_DIRS})
     install(TARGETS ${lib_name}-shared
             LIBRARY DESTINATION ${INSTALL_LIB_DIR}
             PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
@@ -215,10 +218,13 @@ macro (dagmc_install_library lib_name)
       set_target_properties(${lib_name}-static
         PROPERTIES INSTALL_RPATH "" INSTALL_RPATH_USE_LINK_PATH FALSE)
     endif ()
-    target_link_libraries(${lib_name}-static ${LINK_LIBS_STATIC})
+    foreach(lib ${LINK_LIBS_STATIC})
+      target_link_libraries(${lib_name}-static PUBLIC ${lib})
+    endforeach ()
+    target_include_directories(${lib_name}-static ${INC_DIRS})
     install(TARGETS ${lib_name}-static
-            ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-            PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
+      ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+      PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
   endif ()
 
   # Keep a list of all libraries being installed
