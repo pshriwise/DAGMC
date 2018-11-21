@@ -6,3 +6,5 @@
 
 # Ignore built documentation
 gh-build
+bld
+build
