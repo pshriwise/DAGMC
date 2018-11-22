@@ -279,8 +279,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 #ifdef DOUBLE_DOWN
   int surf_idx;
   RTI->dag_ray_fire(volume, point, dir, surf_idx, next_surf_dist,
-                    history ? &(history->prev_facets) : NULL,
-                    user_dist_limit, ray_orientation);
+                    history, user_dist_limit, ray_orientation);
   next_surf = entity_by_index(2, surf_idx+1);
   rval = MB_SUCCESS;
 #else
