@@ -201,8 +201,13 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  //  rval = setup_obbs();
+#ifdef DOUBLE_DOWN
+  rval = RTI->init();
+  MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
+#else
+  rval = setup_obbs();
   MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+#endif
 
   // setup indices
   rval = setup_indices();
@@ -254,9 +259,6 @@ ErrorCode DagMC::finish_loading() {
   MB_CHK_SET_ERR(rval, "Failed to find the geometry sets");
 
   std::cout << "Using faceting tolerance: " << facetingTolerance << std::endl;
-
-  rval = RTI->init();
-  MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
   
   return MB_SUCCESS;
 }
@@ -269,14 +271,19 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
+  ErrorCode rval;
+#ifdef DOUBLE_DOWN
   int surf_idx;
   RTI->dag_ray_fire(volume, point, dir, surf_idx, next_surf_dist,
                                  history, user_dist_limit, ray_orientation);
   next_surf = entity_by_index(2, surf_idx+1);
-  // ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
-  //                                history, user_dist_limit, ray_orientation,
-  //                                stats);
-  return MB_SUCCESS;
+  rval = MB_SUCCESS;
+#else
+  rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+                       history, user_dist_limit, ray_orientation,
+                       stats);
+#endif
+  return rval;
 }
 
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],

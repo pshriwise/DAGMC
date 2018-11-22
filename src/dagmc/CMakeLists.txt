@@ -17,6 +17,7 @@ set(LINK_LIBS_EXTERN_NAMES MOAB_LIBRARIES HDF5_LIBRARIES)
 
 if (dd_FOUND)
   list(APPEND LINK_LIBS_EXTERN_NAMES DD)
+  add_definitions(-DDOUBLE_DOWN)
 endif ()
 
 include_directories(${CMAKE_BINARY_DIR}/src/dagmc)

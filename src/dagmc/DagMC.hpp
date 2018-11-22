@@ -12,7 +12,9 @@
 #include "moab/GeomQueryTool.hpp"
 #include "DagMCVersion.hpp"
 
+#ifdef DOUBLE_DOWN
 #include "RTI.hpp"
+#endif
 
 #include <vector>
 #include <map>
@@ -394,7 +396,9 @@ class DagMC {
 
   GeomTopoTool* GTT;
   GeomQueryTool* GQT;
+#ifdef DOUBLE_DOWN  
   RayTracingInterface* RTI;
+#endif
 
  public:
   Tag  nameTag, facetingTolTag;
