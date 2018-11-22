@@ -21,6 +21,10 @@
 #define MB_OBB_TREE_TAG_NAME "OBB_TREE"
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
+#ifdef DOUBLE_DOWN
+#include "MOABRay.h"
+#endif
+
 namespace moab {
 
 /* Tolerance Summary
@@ -275,7 +279,8 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 #ifdef DOUBLE_DOWN
   int surf_idx;
   RTI->dag_ray_fire(volume, point, dir, surf_idx, next_surf_dist,
-                                 history, user_dist_limit, ray_orientation);
+                    history ? &(history->prev_facets) : NULL,
+                    user_dist_limit, ray_orientation);
   next_surf = entity_by_index(2, surf_idx+1);
   rval = MB_SUCCESS;
 #else
