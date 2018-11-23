@@ -205,13 +205,13 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-#ifdef DOUBLE_DOWN
+  //#ifdef DOUBLE_DOWN
   rval = RTI->init();
   MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
-#else
+  //#else
   rval = setup_obbs();
   MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
-#endif
+  //#endif
 
   // setup indices
   rval = setup_indices();
@@ -293,7 +293,13 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  int& result, const double* uvw,
                                  const RayHistory* history) {
+  ErrorCode rval;
+#ifdef DOUBLE_DOWN
+  RTI->dag_point_in_volume(volume, xyz, result, uvw, (RayHistory*)history);
+  rval = MB_SUCCESS;
+#else 
   ErrorCode rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
+#endif
   return rval;
 }
 
