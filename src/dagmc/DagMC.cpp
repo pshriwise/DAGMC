@@ -277,10 +277,8 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           OrientedBoxTreeTool::TrvStats* stats) {
   ErrorCode rval;
 #ifdef DOUBLE_DOWN
-  int surf_idx;
-  RTI->dag_ray_fire(volume, point, dir, surf_idx, next_surf_dist,
+  RTI->dag_ray_fire(volume, point, dir, next_surf, next_surf_dist,
                     history, user_dist_limit, ray_orientation);
-  next_surf = entity_by_index(2, surf_idx+1);
   rval = MB_SUCCESS;
 #else
   rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
