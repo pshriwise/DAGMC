@@ -17,6 +17,7 @@ dagmc_setup_options()
 
 find_package(MOAB REQUIRED)
 
+dagmc_setup_flags()
 find_package(dd REQUIRED)
 set(DD_SHARED dd)
 set(DD_STATIC dd)
