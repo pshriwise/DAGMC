@@ -205,13 +205,13 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  //#ifdef DOUBLE_DOWN
+#ifdef DOUBLE_DOWN
   rval = RTI->init();
   MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
-  //#else
+#else
   rval = setup_obbs();
   MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
-  //#endif
+#endif
 
   // setup indices
   rval = setup_indices();
