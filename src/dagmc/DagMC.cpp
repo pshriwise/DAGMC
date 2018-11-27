@@ -293,7 +293,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  const RayHistory* history) {
   ErrorCode rval;
 #ifdef DOUBLE_DOWN
-  RTI->dag_point_in_volume(volume, xyz, result, uvw, (RayHistory*)history);
+  RTI->dag_point_in_volume(volume, xyz, result, uvw, (RayHistory*)history, GQT->get_overlap_thickness());
   rval = MB_SUCCESS;
 #else 
   ErrorCode rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
