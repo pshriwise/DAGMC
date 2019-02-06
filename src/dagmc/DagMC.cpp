@@ -216,6 +216,44 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
 
   containing_vol = volume;
 
+  // now handle implicit complement, need to rebuild if it exists
+  EntityHandle ic;
+  if (MB_ENTITY_NOT_FOUND != GTT->get_implicit_complement(ic)) {
+    EntityHandle ic_tree_root;
+    bool rebuild_ic_tree = MB_INDEX_OUT_OF_RANGE == GTT->get_root(ic, ic_tree_root);
+
+    // delete IC volume
+    rval = MBI->delete_entities(&ic, 1);
+    MB_CHK_SET_ERR(rval, "Failed to delete implicit complement when creating containing volume.");
+
+    // if IC tree exists, delete it (volume only)
+    if (rebuild_ic_tree) {
+      rval = GTT->delete_obb_tree(ic, true);
+      MB_CHK_SET_ERR(rval, "Failed to remove the implicit complement OBB tree when creating containing volume.");
+    }
+
+    // re-create IC
+    rval = setup_impl_compl();
+    MB_CHK_SET_ERR(rval, "Failed to re-create the implicit complement when adding containing volume.");
+
+
+    // if needed, delete IC tree
+    if (rebuild_ic_tree) {
+      // because the IC was present and had a tree, we'll assume that we need one for our containing vol
+      rval = GTT->construct_obb_tree(containing_vol);
+      MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree.");
+
+      // get the new IC
+      rval = GTT->get_implicit_complement(ic);
+      MB_CHK_SET_ERR(rval, "Failed to get the new implicit complement when adding containing volume.");
+
+      rval = GTT->construct_obb_tree(ic);
+      MB_CHK_SET_ERR(rval, "Failed to re-create the implicity complement OBB tree when adding containing volume.");
+
+    } // implicit complement handling
+
+  }
+
   return MB_SUCCESS;
 
 }
@@ -347,6 +385,7 @@ ErrorCode DagMC::setup_obbs() {
     rval = GTT->construct_obb_trees();
     MB_CHK_SET_ERR(rval, "Failed to build obb trees");
   }
+
   return MB_SUCCESS;
 }
 
