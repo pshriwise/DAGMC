@@ -145,6 +145,182 @@ ErrorCode DagMC::setup_impl_compl() {
   return MB_SUCCESS;
 }
 
+ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
+  ErrorCode rval;
+
+  // determine the extents of the model
+  std::vector<EntityHandle> current_volumes = vol_handles();
+  std::vector<EntityHandle>::iterator it;
+  double model_max[3] = {-1.e37, -1.e37, -1.e37};
+  double model_min[3] = { 1.e37,  1.e37,  1.e37};
+
+  for(it = current_volumes.begin(); it != current_volumes.end(); it++) {
+    double vol_max[3], vol_min[3];
+    rval = getobb(*it, vol_min, vol_max);
+    MB_CHK_SET_ERR(rval, "Failed to get OBB for volume: " << get_entity_id(*it));
+
+    // update min
+    model_min[0] = vol_min[0] < model_min[0] ? vol_min[0] : model_min[0];
+    model_min[1] = vol_min[1] < model_min[1] ? vol_min[1] : model_min[1];
+    model_min[2] = vol_min[2] < model_min[2] ? vol_min[2] : model_min[2];
+
+    // update max
+    model_max[0] = vol_max[0] > model_max[0] ? vol_max[0] : model_max[0];
+    model_max[1] = vol_max[1] > model_max[1] ? vol_max[1] : model_max[1];
+    model_max[2] = vol_max[2] > model_max[2] ? vol_max[2] : model_max[2];
+  }
+
+  // bump the vertices away from the origin a bit
+  double bump_val = 10.0;
+  model_min[0] -= bump_val; model_min[1] -= bump_val; model_min[2] -= bump_val;
+  model_max[0] += bump_val; model_max[1] += bump_val; model_max[2] += bump_val;
+
+  // create inner surface (normals inward)
+  EntityHandle inner_surf;
+  rval = create_box_surface(model_min, model_max, inner_surf, false);
+  MB_CHK_SET_ERR(rval, "Failed to create the inner box surface of the containing volume.");
+
+  // bump them some more for the outer surface
+  model_min[0] -= bump_val; model_min[1] -= bump_val; model_min[2] -= bump_val;
+  model_max[0] += bump_val; model_max[1] += bump_val; model_max[2] += bump_val;
+
+  // create outer surface (normals outward)
+  EntityHandle outer_surf;
+  rval = create_box_surface(model_min, model_max, outer_surf);
+  MB_CHK_SET_ERR(rval, "Failed to create the outer box surface of the containing volume.");
+
+  // create volume set
+  EntityHandle volume;
+  rval = MBI->create_meshset(0, volume);
+  MB_CHK_SET_ERR(rval, "Failed to create containing volume meshset.");
+
+  // tag as volume
+  int dim = 3;
+  rval = MBI->tag_set_data(geom_tag(), &volume, 1, &dim);
+  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface.");
+
+  Tag cat_tag;
+  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
+                             MB_TYPE_OPAQUE, cat_tag, MB_TAG_SPARSE|MB_TAG_CREAT);
+  MB_CHK_SET_ERR(rval, "Could not get the category tag");
+
+  static const char volume_category[CATEGORY_TAG_SIZE] = "Volume\0";
+  rval = MBI->tag_set_data(cat_tag, &volume, 1, volume_category );
+  MB_CHK_SET_ERR(rval, "Could not set the category tag for the implicit complement");
+
+  // create parent/child relationships
+  rval = MBI->add_parent_child(volume, inner_surf);
+  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for inner containing surface.");
+  rval = MBI->add_parent_child(volume, outer_surf);
+  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface.");
+
+  containing_vol = volume;
+
+  return MB_SUCCESS;
+
+}
+
+ErrorCode DagMC::create_box_surface(double box_min[3],
+                                    double box_max[3],
+                                    EntityHandle& surface,
+                                    bool normals_out) {
+  ErrorCode rval;
+  // check for degenerate coordinates
+  if( box_min[0] >= box_max[0] || box_min[1] >= box_max[1] || box_min[2] >= box_max[2] ) {
+    std::cerr << "Invalid box coordinates for creating a new surface: \n";
+    std::cerr << "Box min corner: " << box_min[0] << " " << box_min[1] << " " << box_min[2] << "\n";
+    std::cerr << "Box max corner: " << box_max[0] << " " << box_max[1] << " " << box_max[2] << "\n";
+    return MB_FAILURE;
+  }
+
+  // create vertices for each corner
+  EntityHandle inner_verts[8];
+  double vert_coords[3];
+  // bottom (in Z)
+  vert_coords[0] = box_min[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_min[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[0]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_max[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_min[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[1]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_max[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_min[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[2]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_min[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_min[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[3]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  // top (in Z)
+  vert_coords[0] = box_min[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_max[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[4]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_max[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_max[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[5]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_max[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_max[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[6]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  vert_coords[0] = box_min[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_max[2];
+  rval = MBI->create_vertex(vert_coords, inner_verts[7]);
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+
+  // create inner triangles
+  EntityHandle inner_tris[12];
+  int conn[12][3] = {{0, 3, 1}, {2, 1, 3},
+                     {1, 2, 5}, {6, 5, 2},
+                     {0, 1, 4}, {5, 4, 1},
+                     {3, 0, 7}, {4, 7, 0},
+                     {2, 3, 6}, {7, 6, 3},
+                     {4, 5, 7}, {6, 7, 5}};
+
+  std::vector<EntityHandle> tris;
+  for (int i = 0; i < 12; i++) {
+    EntityHandle connectivity[3];
+    if (normals_out) {
+      connectivity[0] = inner_verts[conn[i][0]];
+      connectivity[1] = inner_verts[conn[i][1]];
+      connectivity[2] = inner_verts[conn[i][2]];
+    } else {
+      connectivity[0] = inner_verts[conn[i][0]];
+      connectivity[1] = inner_verts[conn[i][2]];
+      connectivity[2] = inner_verts[conn[i][1]];
+    }
+    EntityHandle new_tri;
+
+    rval = MBI->create_element(MBTRI, connectivity, 3, new_tri);
+    MB_CHK_SET_ERR(rval, "Failed to create new triangle for containing volume.");
+
+    tris.push_back(new_tri);
+  }
+
+  // create a new meshset for the surface
+  EntityHandle surf_set;
+  rval = MBI->create_meshset(0, surf_set);
+  MB_CHK_SET_ERR(rval, "Failed to create surface set for containing volume.");
+
+  // add triangles to set
+  rval = MBI->add_entities(surf_set, &(tris[0]), tris.size());
+  MB_CHK_SET_ERR(rval, "Failed to add triangles to surface for containing volume.");
+
+  // tag as surface
+  int dim = 2;
+  rval = MBI->tag_set_data(geom_tag(), &surf_set, 1, &dim);
+  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface.");
+
+  std::string name = "Surface";
+  Tag cat_tag;
+  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
+                             MB_TYPE_OPAQUE, cat_tag, MB_TAG_SPARSE|MB_TAG_CREAT);
+  MB_CHK_SET_ERR(rval, "Could not get the category tag");
+
+  static const char surface_category[CATEGORY_TAG_SIZE] = "Surface\0";
+  rval = MBI->tag_set_data(cat_tag, &surf_set, 1, surface_category );
+  MB_CHK_SET_ERR(rval, "Could not set the category tag for the implicit complement");
+
+  surface = surf_set;
+
+  return MB_SUCCESS;
+}
+
 // gets the entity sets tagged with geomtag 2 and 3
 // surfaces and volumes respectively
 ErrorCode DagMC::setup_geometry(Range& surfs, Range& vols) {

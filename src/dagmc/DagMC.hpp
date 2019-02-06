@@ -117,6 +117,22 @@ class DagMC {
    */
   ErrorCode setup_impl_compl();
 
+  /**\brief creates a cubic volume bounding all existing entities
+   * This method determines the largest bounding box of the geometry
+   * and creates a cubic volume containing the entirety of the current model.
+   */
+  ErrorCode create_containing_volume(EntityHandle& containing_vol);
+
+  /**\brief convenience function for creating a box surface
+   * This method creates a box surface of 12 triangles where the box vertices
+   * are created using the minimum and maximum coordinates specified as the
+   * lower left and upper right corner of the box, respectively.
+   */
+  ErrorCode create_box_surface(double box_min[3],
+                               double box_max[3],
+                               EntityHandle& surface,
+                               bool normals_out = true);
+
   /**\brief sets up ranges of the volume and surface entity sets
    *
    * Helper function for setup_indices. Sets ranges containing
