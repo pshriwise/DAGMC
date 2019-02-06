@@ -117,22 +117,6 @@ class DagMC {
    */
   ErrorCode setup_impl_compl();
 
-  /**\brief creates a cubic volume bounding all existing entities
-   * This method determines the largest bounding box of the geometry
-   * and creates a cubic volume containing the entirety of the current model.
-   */
-  ErrorCode create_containing_volume(EntityHandle* containing_vol = nullptr);
-
-  /**\brief convenience function for creating a box surface
-   * This method creates a box surface of 12 triangles where the box vertices
-   * are created using the minimum and maximum coordinates specified as the
-   * lower left and upper right corner of the box, respectively.
-   */
-  ErrorCode create_box_surface(double box_min[3],
-                               double box_max[3],
-                               EntityHandle& surface,
-                               bool normals_out = true);
-
   /**\brief sets up ranges of the volume and surface entity sets
    *
    * Helper function for setup_indices. Sets ranges containing
@@ -153,10 +137,33 @@ class DagMC {
    */
   ErrorCode setup_indices();
 
+  /**\brief creates a graveyard volume for the DagMC model
+   * This method creates a cubic volume using create_containing_volume
+   * and sets metadata s.t. it will be recognized as a graveyard volume.
+   */
+  ErrorCode create_graveyard();
 
  private:
   /** loading code shared by load_file and load_existing_contents */
   ErrorCode finish_loading();
+
+  /**\brief creates a cubic volume bounding all existing entities
+   * This method determines the largest bounding box of the geometry
+   * and creates a cubic volume containing the entirety of the current model.
+   * NOTE: this method relies on OBB trees existing for the model
+   * and should not be called before these have been created.
+   */
+  ErrorCode create_containing_volume(EntityHandle& containing_vol);
+
+  /**\brief convenience function for creating a box surface
+   * This method creates a box surface of 12 triangles where the box vertices
+   * are created using the minimum and maximum coordinates specified as the
+   * lower left and upper right corner of the box, respectively.
+   */
+  ErrorCode create_box_surface(double box_min[3],
+                               double box_max[3],
+                               EntityHandle& surface,
+                               bool normals_out = true);
 
   /* SECTION II: Fundamental Geometry Operations/Queries */
  public:

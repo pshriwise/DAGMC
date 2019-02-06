@@ -145,7 +145,27 @@ ErrorCode DagMC::setup_impl_compl() {
   return MB_SUCCESS;
 }
 
-ErrorCode DagMC::create_containing_volume(EntityHandle* containing_vol) {
+ErrorCode DagMC::create_graveyard() {
+  ErrorCode rval;
+
+  EntityHandle graveyard;
+  rval = create_containing_volume(graveyard);
+  MB_CHK_SET_ERR(rval, "Failed to create the containing volume.");
+
+  Tag name_tag;
+  rval = MBI->tag_get_handle(NAME_TAG_NAME, NAME_TAG_SIZE,
+                             MB_TYPE_OPAQUE, name_tag, MB_TAG_CREAT|MB_TAG_SPARSE);
+  MB_CHK_SET_ERR_CONT(rval, "Error: Failed to create name tag");
+
+  const char graveyard_val[NAME_TAG_SIZE] = "mat:Graveyard\0";
+  rval = MBI->tag_set_data(name_tag, &graveyard, 1, graveyard_val);
+  MB_CHK_SET_ERR(rval, "Failed to set new graveyard metadata.");
+
+  return MB_SUCCESS;
+}
+
+
+ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   ErrorCode rval;
 
   // determine the extents of the model
@@ -217,9 +237,13 @@ ErrorCode DagMC::create_containing_volume(EntityHandle* containing_vol) {
   rval = MBI->add_parent_child(volume, outer_surf);
   MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface.");
 
-  if (containing_vol) {
-    *containing_vol = volume;
-  }
+  // set sense relationships (both forward)
+  rval = GTT->set_sense(inner_surf, volume, 1);
+  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume.");
+  rval = GTT->set_sense(outer_surf, volume, 1);
+  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume.");
+
+  containing_vol = volume;
 
   // now handle implicit complement, need to rebuild if it exists
   EntityHandle ic;
@@ -245,7 +269,7 @@ ErrorCode DagMC::create_containing_volume(EntityHandle* containing_vol) {
     // if needed, delete IC tree
     if (rebuild_ic_tree) {
       // because the IC was present and had a tree, we'll assume that we need one for our containing vol
-      rval = GTT->construct_obb_tree(*containing_vol);
+      rval = GTT->construct_obb_tree(containing_vol);
       MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree.");
 
       // get the new IC
@@ -422,6 +446,10 @@ ErrorCode DagMC::init_OBBTree() {
   // build obbs
   rval = setup_obbs();
   MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+
+  // create graveyard
+  rval = create_graveyard();
+  MB_CHK_SET_ERR(rval, "Failed to create graveyard volume.");
 
   // setup indices
   rval = setup_indices();
