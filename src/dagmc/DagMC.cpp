@@ -148,18 +148,47 @@ ErrorCode DagMC::setup_impl_compl() {
 ErrorCode DagMC::create_graveyard() {
   ErrorCode rval;
 
-  EntityHandle graveyard;
-  rval = create_containing_volume(graveyard);
+  EntityHandle graveyard_vol;
+  rval = create_containing_volume(graveyard_vol);
   MB_CHK_SET_ERR(rval, "Failed to create the containing volume");
 
-  Tag name_tag;
-  rval = MBI->tag_get_handle(NAME_TAG_NAME, NAME_TAG_SIZE,
-                             MB_TYPE_OPAQUE, name_tag, MB_TAG_CREAT|MB_TAG_SPARSE);
-  MB_CHK_SET_ERR_CONT(rval, "Error: Failed to create name tag");
+  Tag category_tag;
+  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
+                                 MB_TYPE_OPAQUE, category_tag, MB_TAG_SPARSE|MB_TAG_CREAT);
+  MB_CHK_SET_ERR(rval, "Could not get the category tag");
 
-  const char graveyard_val[NAME_TAG_SIZE] = "mat:Graveyard\0";
-  rval = MBI->tag_set_data(name_tag, &graveyard, 1, graveyard_val);
-  MB_CHK_SET_ERR(rval, "Failed to set new graveyard metadata");
+  // find the graveyard group
+  Range graveyard_grps;
+  Tag tags[2] = {category_tag, name_tag()};
+  static const char cat_val[CATEGORY_TAG_SIZE] = "Group\0";
+  static const char name_val[NAME_TAG_SIZE] = "mat:Graveyard\0";
+  const void* vals[2] = {&cat_val, &name_val};
+  rval = MBI->get_entities_by_type_and_tag(0, MBENTITYSET, &tags[0], &vals[0], 2, graveyard_grps);
+  if (MB_ENTITY_NOT_FOUND != rval) {
+    MB_CHK_SET_ERR(rval, "Failed to get graveyard group");
+  }
+
+  EntityHandle graveyard_group;
+  if (graveyard_grps.size() > 0) {
+    graveyard_group = graveyard_grps[0];
+  } else {
+    // otherwise create the group and add the vol
+    rval = MBI->create_meshset(0, graveyard_group);
+    MB_CHK_SET_ERR(rval, "Failed to create a new meshset for a new graveyard");
+
+    rval = GTT->add_geo_set(graveyard_group, 4);
+    MB_CHK_SET_ERR(rval, "Failed to add the graveyard group to the GTT");
+
+    rval = MBI->tag_set_data(category_tag, &graveyard_group, 1, cat_val);
+    MB_CHK_SET_ERR(rval, "Failed to set the graveyard category tag name");
+
+    rval = MBI->tag_set_data(name_tag(), &graveyard_group, 1, name_val);
+    MB_CHK_SET_ERR(rval, "Failed to set the graveyard metadata name");
+  }
+
+  // add the graveyard_vol to the graveyard group
+  rval = MBI->add_entities(graveyard_group, &graveyard_vol, 1);
+  MB_CHK_SET_ERR(rval, "Failed to add the new graveyard volume to the graveyard_group");
 
   return MB_SUCCESS;
 }
@@ -223,14 +252,14 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   rval = MBI->add_parent_child(volume, outer_surf);
   MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface");
 
+  rval = GTT->add_geo_set(volume, 3);
+  MB_CHK_SET_ERR(rval, "Failed to add containing volume to the model");
+
   // set sense relationships (both forward)
   rval = GTT->set_sense(inner_surf, volume, 1);
   MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
   rval = GTT->set_sense(outer_surf, volume, 1);
   MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
-
-  rval = GTT->add_geo_set(volume, 3);
-  MB_CHK_SET_ERR(rval, "Failed to add containing volume to the model");
 
   containing_vol = volume;
 
@@ -240,15 +269,9 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
     EntityHandle ic_tree_root;
     bool rebuild_ic_tree = MB_INDEX_OUT_OF_RANGE == GTT->get_root(ic, ic_tree_root);
 
-    // delete IC volume
-    rval = MBI->delete_entities(&ic, 1);
-    MB_CHK_SET_ERR(rval, "Failed to delete implicit complement when creating containing volume");
-
-    // if IC tree exists, delete it (volume only)
-    if (rebuild_ic_tree) {
-      rval = GTT->delete_obb_tree(ic, true);
-      MB_CHK_SET_ERR(rval, "Failed to remove the implicit complement OBB tree when creating containing volume");
-    }
+    // delete IC
+    rval = GTT->delete_implicit_complement();
+    MB_CHK_SET_ERR(rval, "Failed to delete the implicit complement");
 
     // re-create IC
     rval = setup_impl_compl();
