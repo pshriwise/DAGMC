@@ -217,20 +217,6 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   rval = MBI->create_meshset(0, volume);
   MB_CHK_SET_ERR(rval, "Failed to create containing volume meshset");
 
-  // tag as volume
-  int dim = 3;
-  rval = MBI->tag_set_data(geom_tag(), &volume, 1, &dim);
-  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface");
-
-  Tag cat_tag;
-  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
-                             MB_TYPE_OPAQUE, cat_tag, MB_TAG_SPARSE|MB_TAG_CREAT);
-  MB_CHK_SET_ERR(rval, "Could not get the category tag");
-
-  static const char volume_category[CATEGORY_TAG_SIZE] = "Volume\0";
-  rval = MBI->tag_set_data(cat_tag, &volume, 1, volume_category );
-  MB_CHK_SET_ERR(rval, "Could not set the category tag for the implicit complement");
-
   // create parent/child relationships
   rval = MBI->add_parent_child(volume, inner_surf);
   MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for inner containing surface");
@@ -242,6 +228,9 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
   rval = GTT->set_sense(outer_surf, volume, 1);
   MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
+
+  rval = GTT->add_geo_set(volume, 3);
+  MB_CHK_SET_ERR(rval, "Failed to add containing volume to the model");
 
   containing_vol = volume;
 
@@ -368,20 +357,8 @@ ErrorCode DagMC::create_box_surface(double box_min[3],
   rval = MBI->add_entities(surf_set, &(tris[0]), tris.size());
   MB_CHK_SET_ERR(rval, "Failed to add triangles to surface for containing volume");
 
-  // tag as surface
-  int dim = 2;
-  rval = MBI->tag_set_data(geom_tag(), &surf_set, 1, &dim);
-  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface");
-
-  std::string name = "Surface";
-  Tag cat_tag;
-  rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
-                             MB_TYPE_OPAQUE, cat_tag, MB_TAG_SPARSE|MB_TAG_CREAT);
-  MB_CHK_SET_ERR(rval, "Could not get the category tag");
-
-  static const char surface_category[CATEGORY_TAG_SIZE] = "Surface\0";
-  rval = MBI->tag_set_data(cat_tag, &surf_set, 1, surface_category );
-  MB_CHK_SET_ERR(rval, "Could not set the category tag for the implicit complement");
+  rval = GTT->add_geo_set(surf_set, 2);
+  MB_CHK_SET_ERR(rval, "Failed to add box surface to model");
 
   surface = surf_set;
 
