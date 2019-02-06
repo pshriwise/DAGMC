@@ -121,7 +121,7 @@ class DagMC {
    * This method determines the largest bounding box of the geometry
    * and creates a cubic volume containing the entirety of the current model.
    */
-  ErrorCode create_containing_volume(EntityHandle& containing_vol);
+  ErrorCode create_containing_volume(EntityHandle* containing_vol = nullptr);
 
   /**\brief convenience function for creating a box surface
    * This method creates a box surface of 12 triangles where the box vertices

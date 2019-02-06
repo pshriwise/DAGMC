@@ -145,12 +145,15 @@ ErrorCode DagMC::setup_impl_compl() {
   return MB_SUCCESS;
 }
 
-ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
+ErrorCode DagMC::create_containing_volume(EntityHandle* containing_vol) {
   ErrorCode rval;
 
   // determine the extents of the model
-  std::vector<EntityHandle> current_volumes = vol_handles();
-  std::vector<EntityHandle>::iterator it;
+  Range current_volumes;
+  rval = GTT->get_gsets_by_dimension(3, current_volumes);
+  MB_CHK_SET_ERR(rval, "Failed to get current model volumes when adding containing volume.");
+
+  Range::iterator it;
   double model_max[3] = {-1.e37, -1.e37, -1.e37};
   double model_min[3] = { 1.e37,  1.e37,  1.e37};
 
@@ -214,7 +217,9 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   rval = MBI->add_parent_child(volume, outer_surf);
   MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface.");
 
-  containing_vol = volume;
+  if (containing_vol) {
+    *containing_vol = volume;
+  }
 
   // now handle implicit complement, need to rebuild if it exists
   EntityHandle ic;
@@ -240,7 +245,7 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
     // if needed, delete IC tree
     if (rebuild_ic_tree) {
       // because the IC was present and had a tree, we'll assume that we need one for our containing vol
-      rval = GTT->construct_obb_tree(containing_vol);
+      rval = GTT->construct_obb_tree(*containing_vol);
       MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree.");
 
       // get the new IC
