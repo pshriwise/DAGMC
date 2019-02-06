@@ -150,7 +150,7 @@ ErrorCode DagMC::create_graveyard() {
 
   EntityHandle graveyard;
   rval = create_containing_volume(graveyard);
-  MB_CHK_SET_ERR(rval, "Failed to create the containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to create the containing volume");
 
   Tag name_tag;
   rval = MBI->tag_get_handle(NAME_TAG_NAME, NAME_TAG_SIZE,
@@ -159,7 +159,7 @@ ErrorCode DagMC::create_graveyard() {
 
   const char graveyard_val[NAME_TAG_SIZE] = "mat:Graveyard\0";
   rval = MBI->tag_set_data(name_tag, &graveyard, 1, graveyard_val);
-  MB_CHK_SET_ERR(rval, "Failed to set new graveyard metadata.");
+  MB_CHK_SET_ERR(rval, "Failed to set new graveyard metadata");
 
   return MB_SUCCESS;
 }
@@ -171,7 +171,7 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   // determine the extents of the model
   Range current_volumes;
   rval = GTT->get_gsets_by_dimension(3, current_volumes);
-  MB_CHK_SET_ERR(rval, "Failed to get current model volumes when adding containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to get current model volumes when adding containing volume");
 
   Range::iterator it;
   double model_max[3] = {-1.e37, -1.e37, -1.e37};
@@ -201,7 +201,7 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   // create inner surface (normals inward)
   EntityHandle inner_surf;
   rval = create_box_surface(model_min, model_max, inner_surf, false);
-  MB_CHK_SET_ERR(rval, "Failed to create the inner box surface of the containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to create the inner box surface of the containing volume");
 
   // bump them some more for the outer surface
   model_min[0] -= bump_val; model_min[1] -= bump_val; model_min[2] -= bump_val;
@@ -210,17 +210,17 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   // create outer surface (normals outward)
   EntityHandle outer_surf;
   rval = create_box_surface(model_min, model_max, outer_surf);
-  MB_CHK_SET_ERR(rval, "Failed to create the outer box surface of the containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to create the outer box surface of the containing volume");
 
   // create volume set
   EntityHandle volume;
   rval = MBI->create_meshset(0, volume);
-  MB_CHK_SET_ERR(rval, "Failed to create containing volume meshset.");
+  MB_CHK_SET_ERR(rval, "Failed to create containing volume meshset");
 
   // tag as volume
   int dim = 3;
   rval = MBI->tag_set_data(geom_tag(), &volume, 1, &dim);
-  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface.");
+  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface");
 
   Tag cat_tag;
   rval = MBI->tag_get_handle(CATEGORY_TAG_NAME, CATEGORY_TAG_SIZE,
@@ -233,15 +233,15 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
 
   // create parent/child relationships
   rval = MBI->add_parent_child(volume, inner_surf);
-  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for inner containing surface.");
+  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for inner containing surface");
   rval = MBI->add_parent_child(volume, outer_surf);
-  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface.");
+  MB_CHK_SET_ERR(rval, "Failed to create parent-child relationship for outer containing surface");
 
   // set sense relationships (both forward)
   rval = GTT->set_sense(inner_surf, volume, 1);
-  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
   rval = GTT->set_sense(outer_surf, volume, 1);
-  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
 
   containing_vol = volume;
 
@@ -253,31 +253,31 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
 
     // delete IC volume
     rval = MBI->delete_entities(&ic, 1);
-    MB_CHK_SET_ERR(rval, "Failed to delete implicit complement when creating containing volume.");
+    MB_CHK_SET_ERR(rval, "Failed to delete implicit complement when creating containing volume");
 
     // if IC tree exists, delete it (volume only)
     if (rebuild_ic_tree) {
       rval = GTT->delete_obb_tree(ic, true);
-      MB_CHK_SET_ERR(rval, "Failed to remove the implicit complement OBB tree when creating containing volume.");
+      MB_CHK_SET_ERR(rval, "Failed to remove the implicit complement OBB tree when creating containing volume");
     }
 
     // re-create IC
     rval = setup_impl_compl();
-    MB_CHK_SET_ERR(rval, "Failed to re-create the implicit complement when adding containing volume.");
+    MB_CHK_SET_ERR(rval, "Failed to re-create the implicit complement when adding containing volume");
 
 
     // if needed, delete IC tree
     if (rebuild_ic_tree) {
       // because the IC was present and had a tree, we'll assume that we need one for our containing vol
       rval = GTT->construct_obb_tree(containing_vol);
-      MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree.");
+      MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree");
 
       // get the new IC
       rval = GTT->get_implicit_complement(ic);
-      MB_CHK_SET_ERR(rval, "Failed to get the new implicit complement when adding containing volume.");
+      MB_CHK_SET_ERR(rval, "Failed to get the new implicit complement when adding containing volume");
 
       rval = GTT->construct_obb_tree(ic);
-      MB_CHK_SET_ERR(rval, "Failed to re-create the implicity complement OBB tree when adding containing volume.");
+      MB_CHK_SET_ERR(rval, "Failed to re-create the implicity complement OBB tree when adding containing volume");
 
     } // implicit complement handling
 
@@ -306,29 +306,29 @@ ErrorCode DagMC::create_box_surface(double box_min[3],
   // bottom (in Z)
   vert_coords[0] = box_min[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_min[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[0]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_max[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_min[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[1]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_max[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_min[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[2]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_min[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_min[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[3]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   // top (in Z)
   vert_coords[0] = box_min[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_max[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[4]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_max[0]; vert_coords[1] = box_min[1]; vert_coords[2] = box_max[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[5]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_max[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_max[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[6]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
   vert_coords[0] = box_min[0]; vert_coords[1] = box_max[1]; vert_coords[2] = box_max[2];
   rval = MBI->create_vertex(vert_coords, inner_verts[7]);
-  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume.");
+  MB_CHK_SET_ERR(rval, "Unable to create vertex for containing volume");
 
   // create inner triangles
   EntityHandle inner_tris[12];
@@ -354,7 +354,7 @@ ErrorCode DagMC::create_box_surface(double box_min[3],
     EntityHandle new_tri;
 
     rval = MBI->create_element(MBTRI, connectivity, 3, new_tri);
-    MB_CHK_SET_ERR(rval, "Failed to create new triangle for containing volume.");
+    MB_CHK_SET_ERR(rval, "Failed to create new triangle for containing volume");
 
     tris.push_back(new_tri);
   }
@@ -362,16 +362,16 @@ ErrorCode DagMC::create_box_surface(double box_min[3],
   // create a new meshset for the surface
   EntityHandle surf_set;
   rval = MBI->create_meshset(0, surf_set);
-  MB_CHK_SET_ERR(rval, "Failed to create surface set for containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to create surface set for containing volume");
 
   // add triangles to set
   rval = MBI->add_entities(surf_set, &(tris[0]), tris.size());
-  MB_CHK_SET_ERR(rval, "Failed to add triangles to surface for containing volume.");
+  MB_CHK_SET_ERR(rval, "Failed to add triangles to surface for containing volume");
 
   // tag as surface
   int dim = 2;
   rval = MBI->tag_set_data(geom_tag(), &surf_set, 1, &dim);
-  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface.");
+  MB_CHK_SET_ERR(rval, "Failed to set geom id on containing volume surface");
 
   std::string name = "Surface";
   Tag cat_tag;
@@ -449,7 +449,7 @@ ErrorCode DagMC::init_OBBTree() {
 
   // create graveyard
   rval = create_graveyard();
-  MB_CHK_SET_ERR(rval, "Failed to create graveyard volume.");
+  MB_CHK_SET_ERR(rval, "Failed to create graveyard volume");
 
   // setup indices
   rval = setup_indices();
