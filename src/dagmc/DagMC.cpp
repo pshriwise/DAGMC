@@ -190,6 +190,40 @@ ErrorCode DagMC::create_graveyard() {
   rval = MBI->add_entities(graveyard_group, &graveyard_vol, 1);
   MB_CHK_SET_ERR(rval, "Failed to add the new graveyard volume to the graveyard_group");
 
+  if (GTT->have_obb_tree()) {
+    rval = GTT->construct_obb_tree(graveyard_vol);
+    MB_CHK_SET_ERR(rval, "Failed to build graveyard OBB tree");
+  }
+
+  // now handle implicit complement, need to rebuild if it exists
+  EntityHandle ic;
+  if (MB_ENTITY_NOT_FOUND != GTT->get_implicit_complement(ic)) {
+    EntityHandle ic_tree_root;
+    bool rebuild_ic_tree = MB_INDEX_OUT_OF_RANGE == GTT->get_root(ic, ic_tree_root);
+
+    // delete IC
+    rval = GTT->delete_implicit_complement();
+    MB_CHK_SET_ERR(rval, "Failed to delete the implicit complement");
+
+    // re-create IC
+    rval = setup_impl_compl();
+    MB_CHK_SET_ERR(rval, "Failed to re-create the implicit complement when adding containing volume");
+
+
+    // if needed, delete IC tree
+    if (rebuild_ic_tree) {
+
+      // get the new IC
+      rval = GTT->get_implicit_complement(ic);
+      MB_CHK_SET_ERR(rval, "Failed to get the new implicit complement when adding containing volume");
+
+      rval = GTT->construct_obb_tree(ic);
+      MB_CHK_SET_ERR(rval, "Failed to re-create the implicity complement OBB tree when adding containing volume");
+
+    } // implicit complement handling
+
+  }
+
   return MB_SUCCESS;
 }
 
@@ -262,38 +296,6 @@ ErrorCode DagMC::create_containing_volume(EntityHandle& containing_vol) {
   MB_CHK_SET_ERR(rval, "Failed to set inner surface sense for the containing volume");
 
   containing_vol = volume;
-
-  // now handle implicit complement, need to rebuild if it exists
-  EntityHandle ic;
-  if (MB_ENTITY_NOT_FOUND != GTT->get_implicit_complement(ic)) {
-    EntityHandle ic_tree_root;
-    bool rebuild_ic_tree = MB_INDEX_OUT_OF_RANGE == GTT->get_root(ic, ic_tree_root);
-
-    // delete IC
-    rval = GTT->delete_implicit_complement();
-    MB_CHK_SET_ERR(rval, "Failed to delete the implicit complement");
-
-    // re-create IC
-    rval = setup_impl_compl();
-    MB_CHK_SET_ERR(rval, "Failed to re-create the implicit complement when adding containing volume");
-
-
-    // if needed, delete IC tree
-    if (rebuild_ic_tree) {
-      // because the IC was present and had a tree, we'll assume that we need one for our containing vol
-      rval = GTT->construct_obb_tree(containing_vol);
-      MB_CHK_SET_ERR(rval, "Failed to create the container volume's OBB tree");
-
-      // get the new IC
-      rval = GTT->get_implicit_complement(ic);
-      MB_CHK_SET_ERR(rval, "Failed to get the new implicit complement when adding containing volume");
-
-      rval = GTT->construct_obb_tree(ic);
-      MB_CHK_SET_ERR(rval, "Failed to re-create the implicity complement OBB tree when adding containing volume");
-
-    } // implicit complement handling
-
-  }
 
   return MB_SUCCESS;
 
