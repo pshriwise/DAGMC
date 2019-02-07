@@ -208,8 +208,8 @@ ErrorCode DagMC::init_OBBTree() {
   rval = RTI->init();
   MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
 
-  rval = setup_obbs();
-  MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
+  // rval = setup_obbs();
+  // MB_CHK_SET_ERR(rval, "Failed to setup the OBBs");
 
   // setup indices
   rval = setup_indices();
@@ -261,7 +261,7 @@ ErrorCode DagMC::finish_loading() {
   MB_CHK_SET_ERR(rval, "Failed to find the geometry sets");
 
   std::cout << "Using faceting tolerance: " << facetingTolerance << std::endl;
-  
+
   return MB_SUCCESS;
 }
 
@@ -295,7 +295,7 @@ ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
   GTT->get_implicit_complement(impl_comp);
   RTI->dag_point_in_volume(volume, xyz, result, uvw, (RayHistory*)history, GQT->get_overlap_thickness(), impl_comp);
   rval = MB_SUCCESS;
-#else 
+#else
   ErrorCode rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
 #endif
   return rval;
@@ -322,7 +322,13 @@ ErrorCode DagMC::point_in_volume_slow(EntityHandle volume, const double xyz[3],
 ErrorCode DagMC::closest_to_location(EntityHandle volume,
                                      const double coords[3], double& result,
                                      EntityHandle* surface) {
-  ErrorCode rval = GQT->closest_to_location(volume, coords, result, surface);
+  ErrorCode rval;
+#ifdef DOUBLE_DOWN
+  RTI->closest(volume, coords, result);
+  rval = MB_SUCCESS;
+#else
+  rval = GQT->closest_to_location(volume, coords, result, surface);
+#endif
   return rval;
 }
 
