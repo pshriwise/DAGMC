@@ -7,12 +7,12 @@ namespace DagMC {
   DagThreadManager::DagThreadManager(moab::Interface* MBI, int num_threads,
 				     const double p_overlap_tolerance,
 				     const double p_numerical_precision) {
-    // 
+    //
     moab_instance_created = false;
     gtt_instance_created = false;
 
     // set the tolerances
-    
+
     // if the moab pointer is not null point to it
     if (MBI != NULL) {
       MOAB = MBI;
@@ -25,10 +25,10 @@ namespace DagMC {
     // make a new GTT for Thread manager
     gtt_instance_created = true;
     GTT = new moab::GeomTopoTool(MOAB,false);
-    
+
     // number of threads
     set_num_threads(num_threads);
-    
+
     // set storage for master
     dagmc_instances.push_back(new moab::DagMC(GTT));
     dagmc_rayhistories.push_back(new DagMCRayState());
@@ -42,7 +42,7 @@ namespace DagMC {
 
   DagThreadManager::DagThreadManager(moab::GeomTopoTool *gtt, int num_threads,
 				     const double p_overlap_tolerance, const double p_numerical_precision) {
-        // 
+        //
     moab_instance_created = false;
     gtt_instance_created = false;
 
@@ -62,7 +62,7 @@ namespace DagMC {
 
     // number of threads
     set_num_threads(num_threads);
-    
+
     // set storage for master
     dagmc_instances.push_back(new moab::DagMC(GTT));
     dagmc_rayhistories.push_back(new DagMC::DagMCRayState());
@@ -85,7 +85,7 @@ namespace DagMC {
     if(gtt_instance_created) delete GTT;
     if(moab_instance_created) delete MOAB;
   }
-  
+
   // set the number of threads
   void DagThreadManager::set_num_threads(const int thread_count) {
     num_threads = thread_count;
@@ -107,7 +107,7 @@ namespace DagMC {
     rval = dagmc_instances[0]->load_file(cfile);
     return rval;
   }
- 
+
   // this should only be called by 1 thread
   moab::ErrorCode DagThreadManager::init_OBBTree() {
     moab::ErrorCode rval = moab::MB_FAILURE;
@@ -115,7 +115,7 @@ namespace DagMC {
     initialise_child_threads();
     return rval;
   }
-  
+
   // initalise threads with the loaded data
   void DagThreadManager::initialise_child_threads() {
     for (int i = 1 ; i < num_threads ; i++) {
@@ -138,8 +138,8 @@ namespace DagMC {
 					       const int ray_orientation,
 					       moab::OrientedBoxTreeTool::TrvStats* stats){
     moab::ErrorCode rval = moab::MB_FAILURE;
-    
-    moab::DagMC::RayHistory *history = (use_ray_history) ? (dagmc_rayhistories[thread_idx]->history) : (NULL);
+
+    moab::DagMC::RayHistory* history = (use_ray_history) ? &(dagmc_rayhistories[thread_idx]->history) : (NULL);
     rval = dagmc_instances[thread_idx]->ray_fire(volume,ray_start,ray_dir,next_surf,
                                                  next_surf_dist,history,dist_limit,
                                                  ray_orientation,stats);
@@ -154,13 +154,13 @@ namespace DagMC {
 				  const int thread_id,
 				  const double* uvw,
 				  const bool use_ray_history) {
-    
-    moab::ErrorCode rval = moab::MB_FAILURE;
-    
-    moab::DagMC::RayHistory history = (use_ray_history) ? (dagmc_rayhistories[thread_idx]->history) : (NULL);
-    rval = dagmc_instances[thread_idx]->point_in_volume(volume,xyz,result,uvw,history);
 
-    return rval; 
+    moab::ErrorCode rval = moab::MB_FAILURE;
+
+    moab::DagMC::RayHistory* history = (use_ray_history) ? &(dagmc_rayhistories[thread_id]->history) : (NULL);
+    rval = dagmc_instances[thread_id]->point_in_volume(volume,xyz,result,uvw,history);
+
+    return rval;
   }
 
   // thread safe point_in_volume
@@ -168,26 +168,26 @@ namespace DagMC {
 				  const double xyz[3],
 				  int &result,
 				  const int thread_id) {
-    
-    moab::ErrorCode rval = moab::MB_FAILURE;
-    
-    rval = dagmc_instances[thread_idx]->point_in_volume_slow(volume,xyz,result);
 
-    return rval; 
+    moab::ErrorCode rval = moab::MB_FAILURE;
+
+    rval = dagmc_instances[thread_id]->point_in_volume_slow(volume,xyz,result);
+
+    return rval;
   }
 
   // thread safe point_in_volume
   moab::ErrorCode DagThreadManager::closest_to_location(const moab::EntityHandle volume,
 				  const double coords[3],
 				  double &result,
-				  moab::EntityHandle *surface)
+                                  moab::EntityHandle *surface,
 				  const int thread_id) {
-    
-    moab::ErrorCode rval = moab::MB_FAILURE;
-    
-    rval = dagmc_instances[thread_idx]->closest_to_location(volume,xyz,result,surface);
 
-    return rval; 
+    moab::ErrorCode rval = moab::MB_FAILURE;
+
+    rval = dagmc_instances[thread_id]->closest_to_location(volume,coords,result,surface);
+
+    return rval;
   }
 
   // thread save test volume boundary
@@ -200,8 +200,8 @@ namespace DagMC {
 				       const bool use_ray_history) {
 
     moab::ErrorCode rval = moab::MB_SUCCESS;
-    
-    moab::DagMC::RayHistory history = (use_ray_history) ? (dagmc_rayhistories[thread_idx]->history) : (NULL);
+
+    moab::DagMC::RayHistory* history = (use_ray_history) ? &(dagmc_rayhistories[thread_idx]->history) : (NULL);
     rval = dagmc_instances[thread_idx]->test_volume_boundary(volume,surface,xyz,uvw,result,history);
   }
 
@@ -209,7 +209,7 @@ namespace DagMC {
   moab::ErrorCode DagThreadManager::get_angle(moab::EntityHandle surf, const double xyz[3],
 			    double angle[3], const int thread_idx, const bool use_ray_history) {
     moab::ErrorCode rval = moab::MB_FAILURE;
-    moab::DagMC::RayHistory history = (use_ray_history) ? (dagmc_rayhistories[thread_idx]->history) : (NULL);
+    moab::DagMC::RayHistory* history = (use_ray_history) ? &(dagmc_rayhistories[thread_idx]->history) : (NULL);
     rval = dagmc_instances[thread_idx]->get_angle(surf,xyz,angle,history);
 
     return rval;
@@ -218,15 +218,15 @@ namespace DagMC {
   // thread safe reset history
   moab::ErrorCode DagThreadManager::reset_history(const int thread_idx) {
 
-    dagmc_rayhistories[thread_idx].reset();
+    dagmc_rayhistories[thread_idx]->history.reset();
 
     return moab::MB_SUCCESS;
   }
 
   // thread safe reset history
   moab::ErrorCode DagThreadManager::rollback_history(const int thread_idx) {
- 
-    dagmc_rayhistories[thread_idx].rollback();
+
+    dagmc_rayhistories[thread_idx]->history.rollback_last_intersection();
 
     return moab::MB_SUCCESS;
   }

@@ -37,7 +37,7 @@ const bool counting = false; /* controls counts of ray casts and pt_in_vols */
 
 // Empty synonym map for DagMC::parse_metadata()
 const std::map<std::string, std::string> DagMC::no_synonyms;
-  
+
 // DagMC Constructor
 DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision) {
   moab_instance_created = false;
@@ -63,7 +63,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 DagMC::DagMC(GeomTopoTool *gtt, double overlap_tolerance, double p_numerical_precision) {
   moab_instance_created = false; // always
   gtt_instance_created = false;
-  
+
   if(gtt == NULL) {
     moab_instance_created = true;
     gtt_instance_created = true;
@@ -81,9 +81,9 @@ DagMC::DagMC(GeomTopoTool *gtt, double overlap_tolerance, double p_numerical_pre
 // Destructor
 DagMC::~DagMC() {
   // delete the GeomTopoTool and GeomQueryTool
-  if(gtt_instance_created) 
+  if(gtt_instance_created)
     delete GTT;
-  
+
   delete GQT;
 
   // if we created the moab instance
