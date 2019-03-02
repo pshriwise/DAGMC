@@ -306,8 +306,14 @@ ErrorCode DagMC::test_volume_boundary(const EntityHandle volume,
                                       const double xyz[3], const double uvw[3],
                                       int& result,
                                       const RayHistory* history) {
-  ErrorCode rval = GQT->test_volume_boundary(volume, surface, xyz, uvw, result,
+  ErrorCode rval = MB_SUCCESS;
+#ifdef DOUBLE_DOWN
+  RTI->test_volume_boundary(volume, surface, xyz, uvw, result,
                                              history);
+#else
+  rval = GQT->test_volume_boundary(volume, surface, xyz, uvw, result,
+                                             history);
+#endif
   return rval;
 }
 
