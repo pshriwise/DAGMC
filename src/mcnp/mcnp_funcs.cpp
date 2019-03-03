@@ -10,6 +10,7 @@ using moab::DagMC;
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <atomic>
 
 #ifdef CUBIT_LIBS_PRESENT
 #include <fenv.h>
@@ -36,15 +37,15 @@ static std::ostream* raystat_dump = NULL;
 
 /* Static values used by dagmctrack_ */
 
-static DagMC::RayHistory history;
-static int last_nps = 0;
-static double last_uvw[3] = {0, 0, 0};
-static std::vector< DagMC::RayHistory > history_bank;
-static std::vector< DagMC::RayHistory > pblcm_history_stack;
-static bool visited_surface = false;
+thread_local static DagMC::RayHistory history;
+thread_local static int last_nps = 0;
+thread_local static double last_uvw[3] = {0, 0, 0};
+thread_local static std::vector< DagMC::RayHistory > history_bank;
+thread_local static std::vector< DagMC::RayHistory > pblcm_history_stack;
+thread_local static bool visited_surface = false;
 
-static bool use_dist_limit = false;
-static double dist_limit; // needs to be thread-local
+std::atomic<bool> use_dist_limit{false};
+thread_local static double dist_limit; // needs to be thread-local
 
 
 void dagmcinit_(char* cfile, int* clen,  // geom
