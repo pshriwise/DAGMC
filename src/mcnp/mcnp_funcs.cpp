@@ -40,21 +40,21 @@ template class std::vector<moab::DagMC::RayHistory>;
 
 /* Static values used by dagmctrack_ */
 
-static DagMC::RayHistory history;
+DagMC::RayHistory history;
 #pragma omp threadprivate(history)
-static int last_nps = 0;
+int last_nps = 0;
 #pragma omp threadprivate(last_nps)
-static double last_uvw[3] = {0, 0, 0};
+double last_uvw[3] = {0, 0, 0};
 #pragma omp threadprivate(last_uvw)
-static std::vector< DagMC::RayHistory > history_bank;
+std::vector< DagMC::RayHistory > history_bank;
 #pragma omp threadprivate(history_bank)
-static std::vector< DagMC::RayHistory > pblcm_history_stack;
+std::vector< DagMC::RayHistory > pblcm_history_stack;
 #pragma omp threadprivate(pblcm_history_stack)
-static bool visited_surface = false;
+bool visited_surface = false;
 #pragma omp threadprivate(visited_surface)
 
 static bool use_dist_limit = false;
-static double dist_limit; // needs to be thread-local
+double dist_limit; // needs to be thread-local
 #pragma omp threadprivate(dist_limit)
 
 

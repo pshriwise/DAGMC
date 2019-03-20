@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cassert>
 
+#include <thread>
+
 std::string test_file = "test_geom_legacy.h5m";
 std::string test_file_comp = "test_geom_legacy_comp.h5m";
 std::string test_file_reflecting = "test_reflecting.h5m";
@@ -47,6 +49,41 @@ class DAGMCNP5Test : public ::testing::Test {
                &dagmc_version, &moab_version, &max_pbl);
 
   }
+
+  void setup_fire_ray() {
+    std::string filename = test_file;
+    char* file = &filename[0];
+    int len = filename.length();
+    std::string facet_tol = "1.0e-4";
+    char* ftol = &facet_tol[0];
+    int ftol_len = facet_tol.length();
+    int parallel_mode = 0;
+    double dagmc_version;
+    int moab_version;
+    int max_pbl = 0;
+
+    // intialise dagmc
+    dagmcinit_(file, &len, ftol, &ftol_len, &parallel_mode,
+               &dagmc_version, &moab_version, &max_pbl);
+
+    int ih = 1;
+    double u = 0.701, v = 0.7071, w = 0.0;
+    double x = 0.0, y = 0.0, z = 0.0;
+    double huge = 1.E37;
+    double dist{};
+
+    int jap{};
+    int jsu{};
+    int nps = 1;
+
+    dagmctrack_(&ih, &u, &v, &w, &x, &y, &z, &huge, &dist, &jap, &jsu, &nps);
+
+    EXPECT_TRUE(dist < huge);
+    EXPECT_TRUE(jap != 0);
+
+  }
+
+
 
   void setup_problem_reflecting() {
     std::string filename = test_file_reflecting;
@@ -219,4 +256,9 @@ TEST_F(DAGMCNP5Test, dagmcreflecting_test) {
 
   // clearout the dagmc instance
   dagmc_teardown_();
+}
+
+// Test setup outcomes
+TEST_F(DAGMCNP5Test, dagmc_fire_ray_test) {
+  setup_fire_ray();
 }
