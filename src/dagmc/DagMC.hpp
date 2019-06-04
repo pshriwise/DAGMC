@@ -54,10 +54,10 @@ class CartVect;
  *   2) DAG->setup_indices();
  */
 
-class DagMC {
+  class DagMC : virtual public GeomTopoTool {
  public:
   // Constructor
-  DagMC(Interface* mb_impl = NULL, double overlap_tolerance = 0., double numerical_precision = .001);
+    DagMC(Interface* mb_impl = new moab::Core(), double overlap_tolerance = 0., double numerical_precision = .001);
   // Destructor
   ~DagMC();
 
@@ -115,7 +115,7 @@ class DagMC {
    * return the IC if it already exists. If the IC doesn't exist, it will
    * create one.
    */
-  ErrorCode setup_impl_compl();
+   ErrorCode setup_impl_compl();
 
   /**\brief sets up ranges of the volume and surface entity sets
    *
@@ -186,8 +186,8 @@ class DagMC {
   ErrorCode get_angle(EntityHandle surf, const double xyz[3], double angle[3],
                       const RayHistory* history = NULL);
 
-  ErrorCode next_vol(EntityHandle surface, EntityHandle old_volume,
-                     EntityHandle& new_volume);
+  // ErrorCode next_vol(EntityHandle surface, EntityHandle old_volume,
+  //                    EntityHandle& new_volume);
 
   /* SECTION III: Indexing & Cross-referencing */
  public:
@@ -198,7 +198,7 @@ class DagMC {
    */
 
   /** map from dimension & global ID to EntityHandle */
-  EntityHandle entity_by_id(int dimension, int id);
+    //  EntityHandle entity_by_id(int dimension, int id);
   /** map from dimension & base-1 ordinal index to EntityHandle */
   EntityHandle entity_by_index(int dimension, int index);
   /** map from dimension & base-1 ordinal index to global ID */
@@ -322,7 +322,7 @@ class DagMC {
   ErrorCode entities_by_property(const std::string& prop, std::vector<EntityHandle>& return_list,
                                  int dimension = 0, const std::string* value = NULL);
 
-  bool is_implicit_complement(EntityHandle volume);
+    //  bool is_implicit_complement(EntityHandle volume);
 
   /** get the tag for the "name" of a surface == global ID */
   Tag name_tag() {return nameTag;}

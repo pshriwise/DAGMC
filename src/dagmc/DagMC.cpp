@@ -38,8 +38,11 @@ const bool counting = false; /* controls counts of ray casts and pt_in_vols */
 // Empty synonym map for DagMC::parse_metadata()
 const std::map<std::string, std::string> DagMC::no_synonyms;
 
-// DagMC Constructor
-DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision) {
+
+// DagMC Constructors
+  DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision)
+    : GeomTopoTool(mb_impl, false)
+  {
   moab_instance_created = false;
   // if we arent handed a moab instance create one
   if (NULL == mb_impl) {
@@ -52,7 +55,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 
   // make new GeomTopoTool and GeomQueryTool
   GTT = new moab::GeomTopoTool(MBI, false);
-  GQT = new moab::GeomQueryTool(GTT, overlap_tolerance, p_numerical_precision);
+  GQT = new moab::GeomQueryTool(this, overlap_tolerance, p_numerical_precision);
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -61,7 +64,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 // Destructor
 DagMC::~DagMC() {
   // delete the GeomTopoTool and GeomQueryTool
-  delete GTT;
+  //  delete GTT;
   delete GQT;
 
   // if we created the moab instance
@@ -137,7 +140,7 @@ ErrorCode DagMC::load_existing_contents() {
 ErrorCode DagMC::setup_impl_compl() {
   // If it doesn't already exist, create implicit complement
   // Create data structures for implicit complement
-  ErrorCode rval = GTT->setup_implicit_complement();
+  ErrorCode rval = setup_implicit_complement();
   if (MB_SUCCESS != rval) {
     std::cerr << "Failed to find or create implicit complement handle." << std::endl;
     return rval;
@@ -151,11 +154,11 @@ ErrorCode DagMC::setup_geometry(Range& surfs, Range& vols) {
   ErrorCode rval;
 
   // get all surfaces
-  rval = GTT->get_gsets_by_dimension(2, surfs);
+  rval = get_gsets_by_dimension(2, surfs);
   MB_CHK_SET_ERR(rval, "Could not get surfaces from GTT");
 
   // get all volumes
-  rval = GTT->get_gsets_by_dimension(3, vols);
+  rval = get_gsets_by_dimension(3, vols);
   MB_CHK_SET_ERR(rval, "Could not get volumes from GTT");
 
   return MB_SUCCESS;
@@ -166,9 +169,9 @@ ErrorCode DagMC::setup_obbs() {
   ErrorCode rval;
 
   // If we havent got an OBB Tree, build one.
-  if (!GTT->have_obb_tree()) {
+  if (!have_obb_tree()) {
     std::cout << "Building OBB Tree..." << std::endl;
-    rval = GTT->construct_obb_trees();
+    rval = construct_obb_trees();
     MB_CHK_SET_ERR(rval, "Failed to build obb trees");
   }
   return MB_SUCCESS;
@@ -190,7 +193,7 @@ ErrorCode DagMC::init_OBBTree() {
   ErrorCode rval;
 
   // find all geometry sets
-  rval = GTT->find_geomsets();
+  rval = find_geomsets();
   MB_CHK_SET_ERR(rval, "GeomTopoTool could not find the geometry sets");
 
   // implicit compliment
@@ -249,7 +252,7 @@ ErrorCode DagMC::finish_loading() {
 
   // initialize GQT
   std::cout << "Initializing the GeomQueryTool..." << std::endl;
-  rval = GTT->find_geomsets();
+  rval = find_geomsets();
   MB_CHK_SET_ERR(rval, "Failed to find the geometry sets");
 
   std::cout << "Using faceting tolerance: " << facetingTolerance << std::endl;
@@ -319,7 +322,7 @@ ErrorCode DagMC::measure_area(EntityHandle surface, double& result) {
 // get sense of surface(s) wrt volume
 ErrorCode DagMC::surface_sense(EntityHandle volume, int num_surfaces,
                                const EntityHandle* surfaces, int* senses_out) {
-  ErrorCode rval = GTT->get_surface_senses(volume, num_surfaces, surfaces,
+  ErrorCode rval = get_surface_senses(volume, num_surfaces, surfaces,
                                            senses_out);
   return rval;
 }
@@ -327,7 +330,7 @@ ErrorCode DagMC::surface_sense(EntityHandle volume, int num_surfaces,
 // get sense of surface(s) wrt volume
 ErrorCode DagMC::surface_sense(EntityHandle volume, EntityHandle surface,
                                int& sense_out) {
-  ErrorCode rval = GTT->get_sense(surface, volume, sense_out);
+  ErrorCode rval = get_sense(surface, volume, sense_out);
   return rval;
 }
 
@@ -338,17 +341,17 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
   return rval;
 }
 
-ErrorCode DagMC::next_vol(EntityHandle surface, EntityHandle old_volume,
-                          EntityHandle& new_volume) {
-  ErrorCode rval = GTT->next_vol(surface, old_volume, new_volume);
-  return rval;
-}
+// ErrorCode DagMC::next_vol(EntityHandle surface, EntityHandle old_volume,
+//                           EntityHandle& new_volume) {
+//   ErrorCode rval = next_vol(surface, old_volume, new_volume);
+//   return rval;
+// }
 
 /* SECTION III */
 
-EntityHandle DagMC::entity_by_id(int dimension, int id) {
-  return GTT->entity_by_id(dimension, id);
-}
+// EntityHandle DagMC::entity_by_id(int dimension, int id) {
+//   return entity_by_id(dimension, id);
+// }
 
 int DagMC::id_by_index(int dimension, int index) {
   EntityHandle h = entity_by_index(dimension, index);
@@ -356,12 +359,12 @@ int DagMC::id_by_index(int dimension, int index) {
     return 0;
 
   int result = 0;
-  MBI->tag_get_data(GTT->get_gid_tag(), &h, 1, &result);
+  MBI->tag_get_data(get_gid_tag(), &h, 1, &result);
   return result;
 }
 
 int DagMC::get_entity_id(EntityHandle this_ent) {
-  return GTT->global_id(this_ent);
+  return global_id(this_ent);
 }
 
 ErrorCode DagMC::build_indices(Range& surfs, Range& vols) {
@@ -706,7 +709,7 @@ ErrorCode DagMC::entities_by_property(const std::string& prop, std::vector<Entit
   // Note that we cannot specify values for proptag here-- the passed value,
   // if it exists, may be only a subset of the packed string representation
   // of this tag.
-  Tag tags[2] = {proptag, GTT->get_geom_tag()};
+  Tag tags[2] = {proptag, get_geom_tag()};
   void* vals[2] = {NULL, (dimension != 0) ? &dimension : NULL };
   rval = MBI->get_entities_by_type_and_tag(0, MBENTITYSET, tags, vals, 2, all_ents);
   if (MB_SUCCESS != rval)
@@ -731,9 +734,9 @@ ErrorCode DagMC::entities_by_property(const std::string& prop, std::vector<Entit
   return MB_SUCCESS;
 }
 
-bool DagMC::is_implicit_complement(EntityHandle volume) {
-  return GTT->is_implicit_complement(volume);
-}
+// bool DagMC::is_implicit_complement(EntityHandle volume) {
+//   return is_implicit_complement(volume);
+// }
 
 void DagMC::tokenize(const std::string& str,
                      std::vector<std::string>& tokens,
