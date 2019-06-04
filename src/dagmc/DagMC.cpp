@@ -52,7 +52,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 
   // make new GeomTopoTool and GeomQueryTool
   GTT = new moab::GeomTopoTool(MBI, false);
-  GQT = new moab::GeomQueryTool(GTT, overlap_tolerance, p_numerical_precision);
+  RTI = new moab::RayTracingInterface(GTT, overlap_tolerance, p_numerical_precision);
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -62,7 +62,7 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 DagMC::~DagMC() {
   // delete the GeomTopoTool and GeomQueryTool
   delete GTT;
-  delete GQT;
+  delete RTI;
 
   // if we created the moab instance
   // clear it
@@ -247,7 +247,7 @@ ErrorCode DagMC::finish_loading() {
     facetingTolerance = facet_tol_tagvalue;
   }
 
-  // initialize GQT
+  // initialize RTI
   std::cout << "Initializing the GeomQueryTool..." << std::endl;
   rval = GTT->find_geomsets();
   MB_CHK_SET_ERR(rval, "Failed to find the geometry sets");
@@ -266,7 +266,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  ErrorCode rval = GQT->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+  ErrorCode rval = RTI->ray_fire(volume, point, dir, next_surf, next_surf_dist,
                                  history, user_dist_limit, ray_orientation,
                                  stats);
   return rval;
@@ -275,7 +275,7 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  int& result, const double* uvw,
                                  const RayHistory* history) {
-  ErrorCode rval = GQT->point_in_volume(volume, xyz, result, uvw, history);
+  ErrorCode rval = RTI->point_in_volume(volume, xyz, result, uvw, history);
   return rval;
 }
 
@@ -284,7 +284,7 @@ ErrorCode DagMC::test_volume_boundary(const EntityHandle volume,
                                       const double xyz[3], const double uvw[3],
                                       int& result,
                                       const RayHistory* history) {
-  ErrorCode rval = GQT->test_volume_boundary(volume, surface, xyz, uvw, result,
+  ErrorCode rval = RTI->test_volume_boundary(volume, surface, xyz, uvw, result,
                                              history);
   return rval;
 }
@@ -292,7 +292,7 @@ ErrorCode DagMC::test_volume_boundary(const EntityHandle volume,
 // use spherical area test to determine inside/outside of a polyhedron.
 ErrorCode DagMC::point_in_volume_slow(EntityHandle volume, const double xyz[3],
                                       int& result) {
-  ErrorCode rval = GQT->point_in_volume_slow(volume, xyz, result);
+  ErrorCode rval = RTI->point_in_volume_slow(volume, xyz, result);
   return rval;
 }
 
@@ -300,19 +300,19 @@ ErrorCode DagMC::point_in_volume_slow(EntityHandle volume, const double xyz[3],
 ErrorCode DagMC::closest_to_location(EntityHandle volume,
                                      const double coords[3], double& result,
                                      EntityHandle* surface) {
-  ErrorCode rval = GQT->closest_to_location(volume, coords, result, surface);
+  ErrorCode rval = RTI->closest_to_location(volume, coords, result, surface);
   return rval;
 }
 
 // calculate volume of polyhedron
 ErrorCode DagMC::measure_volume(EntityHandle volume, double& result) {
-  ErrorCode rval = GQT->measure_volume(volume, result);
+  ErrorCode rval = RTI->measure_volume(volume, result);
   return rval;
 }
 
 // sum area of elements in surface
 ErrorCode DagMC::measure_area(EntityHandle surface, double& result) {
-  ErrorCode rval = GQT->measure_area(surface, result);
+  ErrorCode rval = RTI->measure_area(surface, result);
   return rval;
 }
 
@@ -334,7 +334,7 @@ ErrorCode DagMC::surface_sense(EntityHandle volume, EntityHandle surface,
 ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3],
                            const RayHistory* history) {
-  ErrorCode rval = GQT->get_normal(surf, in_pt, angle, history);
+  ErrorCode rval = RTI->get_normal(surf, in_pt, angle, history);
   return rval;
 }
 
@@ -418,11 +418,11 @@ ErrorCode DagMC::build_indices(Range& surfs, Range& vols) {
 /* SECTION IV */
 
 void DagMC::set_overlap_thickness(double new_thickness) {
-  GQT->set_overlap_thickness(new_thickness);
+  RTI->set_overlap_thickness(new_thickness);
 }
 
 void DagMC::set_numerical_precision(double new_precision) {
-  GQT->set_numerical_precision(new_precision);
+  RTI->set_numerical_precision(new_precision);
 }
 
 ErrorCode DagMC::write_mesh(const char* ffile,

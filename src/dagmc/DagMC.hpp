@@ -28,6 +28,11 @@ struct DagmcVolData {
 
 namespace moab {
 
+  class RayTracingInterface : public GeomQueryTool {
+    using GeomQueryTool::GeomQueryTool;
+  };
+
+
 class CartVect;
 
 /**\brief
@@ -148,7 +153,7 @@ class DagMC {
   /** The methods in this section are thin wrappers around methods in the
    *  GeometryQueryTool.
    */
-  typedef GeomQueryTool::RayHistory RayHistory;
+  typedef RayTracingInterface::RayHistory RayHistory;
 
   ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
                      const double ray_dir[3], EntityHandle& next_surf,
@@ -227,9 +232,9 @@ class DagMC {
  public:
 
   /** retrieve overlap thickness */
-  double overlap_thickness() { return GQT->get_overlap_thickness(); }
+  double overlap_thickness() { return RTI->get_overlap_thickness(); }
   /** retrieve numerical precision */
-  double numerical_precision() { return GQT->get_numerical_precision(); }
+  double numerical_precision() { return RTI->get_numerical_precision(); }
   /** retrieve faceting tolerance */
   double faceting_tolerance() { return facetingTolerance; }
 
@@ -391,7 +396,7 @@ class DagMC {
   bool moab_instance_created;
 
   GeomTopoTool* GTT;
-  GeomQueryTool* GQT;
+  RayTracingInterface* RTI;
 
  public:
   Tag  nameTag, facetingTolTag;
