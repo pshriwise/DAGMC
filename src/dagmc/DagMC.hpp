@@ -54,7 +54,7 @@ class CartVect;
  *   2) DAG->setup_indices();
  */
 
-  class DagMC : virtual public GeomTopoTool {
+  class DagMC : virtual public GeomTopoTool, virtual public GeomQueryTool {
  public:
   // Constructor
     DagMC(Interface* mb_impl = new moab::Core(), double overlap_tolerance = 0., double numerical_precision = .001);
@@ -150,32 +150,32 @@ class CartVect;
    */
   typedef GeomQueryTool::RayHistory RayHistory;
 
-  ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
-                     const double ray_dir[3], EntityHandle& next_surf,
-                     double& next_surf_dist,
-                     RayHistory* history = NULL,
-                     double dist_limit = 0, int ray_orientation = 1,
-                     OrientedBoxTreeTool::TrvStats* stats = NULL);
+  // ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
+  //                    const double ray_dir[3], EntityHandle& next_surf,
+  //                    double& next_surf_dist,
+  //                    RayHistory* history = NULL,
+  //                    double dist_limit = 0, int ray_orientation = 1,
+  //                    OrientedBoxTreeTool::TrvStats* stats = NULL);
 
-  ErrorCode point_in_volume(const EntityHandle volume, const double xyz[3],
-                            int& result, const double* uvw = NULL,
-                            const RayHistory* history = NULL);
+  // ErrorCode point_in_volume(const EntityHandle volume, const double xyz[3],
+  //                           int& result, const double* uvw = NULL,
+  //                           const RayHistory* history = NULL);
 
-  ErrorCode point_in_volume_slow(const EntityHandle volume, const double xyz[3],
-                                 int& result);
+  // ErrorCode point_in_volume_slow(const EntityHandle volume, const double xyz[3],
+  //                                int& result);
 
-  ErrorCode test_volume_boundary(const EntityHandle volume,
-                                 const EntityHandle surface,
-                                 const double xyz[3], const double uvw[3],
-                                 int& result,
-                                 const RayHistory* history = NULL);
+  // ErrorCode test_volume_boundary(const EntityHandle volume,
+  //                                const EntityHandle surface,
+  //                                const double xyz[3], const double uvw[3],
+  //                                int& result,
+  //                                const RayHistory* history = NULL);
 
-  ErrorCode closest_to_location(EntityHandle volume, const double point[3],
-                                double& result, EntityHandle* surface = 0);
+  // ErrorCode closest_to_location(EntityHandle volume, const double point[3],
+  //                               double& result, EntityHandle* surface = 0);
 
-  ErrorCode measure_volume(EntityHandle volume, double& result);
+  // ErrorCode measure_volume(EntityHandle volume, double& result);
 
-  ErrorCode measure_area(EntityHandle surface, double& result);
+  // ErrorCode measure_area(EntityHandle surface, double& result);
 
   ErrorCode surface_sense(EntityHandle volume, int num_surfaces,
                           const EntityHandle* surfaces, int* senses_out);
@@ -227,19 +227,19 @@ class CartVect;
  public:
 
   /** retrieve overlap thickness */
-  double overlap_thickness() { return GQT->get_overlap_thickness(); }
+  double overlap_thickness() { return get_overlap_thickness(); }
   /** retrieve numerical precision */
-  double numerical_precision() { return GQT->get_numerical_precision(); }
+  double numerical_precision() { return get_numerical_precision(); }
   /** retrieve faceting tolerance */
   double faceting_tolerance() { return facetingTolerance; }
 
   /** Attempt to set a new overlap thickness tolerance, first checking for sanity */
-  void set_overlap_thickness(double new_overlap_thickness);
+    //  void set_overlap_thickness(double new_overlap_thickness);
 
   /** Attempt to set a new numerical precision , first checking for sanity
    *  Use of this function is discouraged; see top of DagMC.cpp
    */
-  void set_numerical_precision(double new_precision);
+    //  void set_numerical_precision(double new_precision);
 
 
   /* SECTION V: Metadata handling */
@@ -331,9 +331,9 @@ class CartVect;
    * not sure what to do about the obb_tag, GTT has no concept of an obb_tag on EntitySets - PCS
    */
   Tag obb_tag() { return NULL; }
-  Tag geom_tag() { return GTT->get_geom_tag(); }
-  Tag id_tag() { return GTT->get_gid_tag(); }
-  Tag sense_tag() { return GTT->get_sense_tag(); }
+  Tag geom_tag() { return get_geom_tag(); }
+  Tag id_tag() { return get_gid_tag(); }
+  Tag sense_tag() { return get_sense_tag(); }
 
  private:
   /** tokenize the metadata stored in group names - basically borrowed from ReadCGM.cpp */
@@ -363,9 +363,10 @@ class CartVect;
 
   /* SECTION VI: Other */
  public:
-  OrientedBoxTreeTool* obb_tree() {return GTT->obb_tree();}
 
-  GeomTopoTool* geom_tool() {return GTT;}
+  // OrientedBoxTreeTool* obb_tree() {return obb_tree();}
+
+  // GeomTopoTool* geom_tool() {return this;}
 
   ErrorCode write_mesh(const char* ffile,
                        const int flen);
@@ -390,10 +391,7 @@ class CartVect;
   Interface* MBI;
   bool moab_instance_created;
 
-  GeomTopoTool* GTT;
-  GeomQueryTool* GQT;
-
- public:
+  public:
   Tag  nameTag, facetingTolTag;
  private:
   /** store some lists indexed by handle */
@@ -437,20 +435,20 @@ inline unsigned int DagMC::num_entities(int dimension) {
 }
 
 inline ErrorCode DagMC::getobb(EntityHandle volume, double minPt[3], double maxPt[3]) {
-  ErrorCode rval = GTT->get_bounding_coords(volume, minPt, maxPt);
+  ErrorCode rval = get_bounding_coords(volume, minPt, maxPt);
   MB_CHK_SET_ERR(rval, "Failed to get obb for volume");
   return MB_SUCCESS;
 }
 
 inline ErrorCode DagMC::getobb(EntityHandle volume, double center[3],
                                double axis1[3], double axis2[3], double axis3[3]) {
-  ErrorCode rval = GTT->get_obb(volume, center, axis1, axis2, axis3);
+  ErrorCode rval = get_obb(volume, center, axis1, axis2, axis3);
   MB_CHK_SET_ERR(rval, "Failed to get obb for volume");
   return MB_SUCCESS;
 }
 
 inline ErrorCode DagMC::get_root(EntityHandle vol_or_surf, EntityHandle& root) {
-  ErrorCode rval = GTT->get_root(vol_or_surf, root);
+  ErrorCode rval = get_root(vol_or_surf, root);
   MB_CHK_SET_ERR(rval, "Failed to get obb root set of volume or surface");
   return MB_SUCCESS;
 }
