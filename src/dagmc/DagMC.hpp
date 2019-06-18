@@ -54,10 +54,10 @@ class CartVect;
  *   2) DAG->setup_indices();
  */
 
-  class DagMC : virtual public GeomTopoTool, virtual public GeomQueryTool {
+ class DagMC : virtual public GeomTopoTool, virtual public GeomQueryTool {
  public:
   // Constructor
-    DagMC(Interface* mb_impl = new moab::Core(), double overlap_tolerance = 0., double numerical_precision = .001);
+    DagMC(Interface* mb_impl = NULL, double overlap_tolerance = 0., double numerical_precision = .001);
   // Destructor
   ~DagMC();
 

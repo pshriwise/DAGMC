@@ -33,6 +33,9 @@ TEST_F(DagmcSimpleTest, dagmc_load_file_dagmc) {
   // make new dagmc into that moab
   DagMC* dagmc = new moab::DagMC(mbi);
 
+  EXPECT_EQ(mbi, dagmc->moab_instance());
+  EXPECT_EQ(dagmc->get_moab_instance(), dagmc->moab_instance());
+
   ErrorCode rval;
   // load a file
   rval = dagmc->load_file(input_file);

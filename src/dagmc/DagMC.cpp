@@ -41,17 +41,17 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
 
 // DagMC Constructors
   DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision)
-  : GeomTopoTool(mb_impl, false), GeomQueryTool(this, overlap_tolerance, p_numerical_precision)
+    : GeomTopoTool(mb_impl ? mb_impl : new moab::Core(), false),
+      GeomQueryTool(this, overlap_tolerance, p_numerical_precision)
   {
   moab_instance_created = false;
-  // if we arent handed a moab instance create one
+  //  if we arent handed a moab instance create one
   if (NULL == mb_impl) {
-    mb_impl = new moab::Core();
     moab_instance_created = true;
   }
 
   // set the internal moab pointer
-  MBI = mb_impl;
+  MBI = get_moab_instance();
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -61,7 +61,11 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
 DagMC::~DagMC() {
   // if we created the moab instance
   // clear it
+
   if (moab_instance_created) {
+    // delete all OBB trees now before the MOAB
+    // interface is deleted
+    delete_all_obb_trees();
     MBI->delete_mesh();
     delete MBI;
   }
