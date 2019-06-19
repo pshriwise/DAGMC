@@ -40,10 +40,9 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
 
 
 // DagMC Constructors
-  DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision)
-    : GeomTopoTool(mb_impl ? mb_impl : new moab::Core(), false),
-      GeomQueryTool(this, overlap_tolerance, p_numerical_precision)
-  {
+DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision)
+  : GeomTopoTool(mb_impl ? mb_impl : new moab::Core(), false),
+    GeomQueryTool(this, overlap_tolerance, p_numerical_precision) {
 
   moab_instance_created = false;
   //  if we arent handed a moab instance create one
@@ -321,7 +320,7 @@ ErrorCode DagMC::finish_loading() {
 ErrorCode DagMC::surface_sense(EntityHandle volume, int num_surfaces,
                                const EntityHandle* surfaces, int* senses_out) {
   ErrorCode rval = get_surface_senses(volume, num_surfaces, surfaces,
-                                           senses_out);
+                                      senses_out);
   return rval;
 }
 
