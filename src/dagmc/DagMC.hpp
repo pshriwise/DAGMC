@@ -54,7 +54,7 @@ class CartVect;
  *   2) DAG->setup_indices();
  */
 
- class DagMC : virtual public GeomTopoTool, virtual public GeomQueryTool {
+ class DagMC : public GeomTopoTool, public GeomQueryTool {
  public:
   // Constructor
     DagMC(Interface* mb_impl = NULL, double overlap_tolerance = 0., double numerical_precision = .001);
@@ -379,7 +379,7 @@ class CartVect;
                    double axis1[3], double axis2[3], double axis3[3]);
 
   /** get the root of the obbtree for a given entity */
-  ErrorCode get_root(EntityHandle vol_or_surf, EntityHandle& root);
+   //  ErrorCode get_root(EntityHandle vol_or_surf, EntityHandle& root);
 
   /** Get the instance of MOAB used by functions in this file. */
   Interface* moab_instance() {return MBI;}
@@ -447,11 +447,11 @@ inline ErrorCode DagMC::getobb(EntityHandle volume, double center[3],
   return MB_SUCCESS;
 }
 
-inline ErrorCode DagMC::get_root(EntityHandle vol_or_surf, EntityHandle& root) {
-  ErrorCode rval = get_root(vol_or_surf, root);
-  MB_CHK_SET_ERR(rval, "Failed to get obb root set of volume or surface");
-  return MB_SUCCESS;
-}
+// inline ErrorCode DagMC::get_root(EntityHandle vol_or_surf, EntityHandle& root) {
+//   ErrorCode rval = get_root(vol_or_surf, root);
+//   MB_CHK_SET_ERR(rval, "Failed to get obb root set of volume or surface");
+//   return MB_SUCCESS;
+// }
 
 } // namespace moab
 

@@ -44,6 +44,7 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
     : GeomTopoTool(mb_impl ? mb_impl : new moab::Core(), false),
       GeomQueryTool(this, overlap_tolerance, p_numerical_precision)
   {
+
   moab_instance_created = false;
   //  if we arent handed a moab instance create one
   if (NULL == mb_impl) {
@@ -52,6 +53,13 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
 
   // set the internal moab pointer
   MBI = get_moab_instance();
+
+  // replace the obb tree tool with one that
+  // won't clean up it's own trees (using a stale interface pointer)
+  // on DagMC destruction
+  OrientedBoxTreeTool* tree = obb_tree();
+  delete tree;
+  tree = new OrientedBoxTreeTool(MBI);
 
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
@@ -63,9 +71,6 @@ DagMC::~DagMC() {
   // clear it
 
   if (moab_instance_created) {
-    // delete all OBB trees now before the MOAB
-    // interface is deleted
-    delete_all_obb_trees();
     MBI->delete_mesh();
     delete MBI;
   }
@@ -192,10 +197,7 @@ ErrorCode DagMC::init_OBBTree() {
   rval = find_geomsets();
   MB_CHK_SET_ERR(rval, "GeomTopoTool could not find the geometry sets");
 
-  // implicit compliment
-  // EntityHandle implicit_complement;
-  //  rval = GTT->zget_implicit_complement(implicit_complement, true);
-  rval = setup_impl_compl();
+  rval = setup_implicit_complement();
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
