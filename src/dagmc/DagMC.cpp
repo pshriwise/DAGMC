@@ -67,7 +67,9 @@ DagMC::~DagMC() {
   for (const auto& vol : vols) {
     EntityHandle root;
     ErrorCode rval = get_root(vol, root);
-    if (rval == MB_SUCCESS) { delete_obb_tree(vol, true); }
+    if (rval == MB_SUCCESS) {
+      delete_obb_tree(vol, true);
+    }
   }
 
   Range surfs;
@@ -75,7 +77,9 @@ DagMC::~DagMC() {
   for (const auto& surf : surfs) {
     EntityHandle root;
     ErrorCode rval = get_root(surf, root);
-    if (rval == MB_SUCCESS) { delete_obb_tree(surf); }
+    if (rval == MB_SUCCESS) {
+      delete_obb_tree(surf);
+    }
   }
 
   if (moab_instance_created) {
