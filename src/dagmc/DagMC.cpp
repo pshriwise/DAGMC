@@ -53,13 +53,6 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
   // set the internal moab pointer
   MBI = get_moab_instance();
 
-  // replace the obb tree tool with one that
-  // won't clean up it's own trees (using a stale interface pointer)
-  // on DagMC destruction
-  OrientedBoxTreeTool* tree = obb_tree();
-  delete tree;
-  tree = new OrientedBoxTreeTool(MBI);
-
   // This is the correct place to uniquely define default values for the dagmc settings
   defaultFacetingTolerance = .001;
 }
@@ -68,6 +61,22 @@ DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_pr
 DagMC::~DagMC() {
   // if we created the moab instance
   // clear it
+
+  Range vols;
+  get_gsets_by_dimension(3, vols);
+  for (const auto& vol : vols) {
+    EntityHandle root;
+    ErrorCode rval = get_root(vol, root);
+    if (rval == MB_SUCCESS) { delete_obb_tree(vol, true); }
+  }
+
+  Range surfs;
+  get_gsets_by_dimension(2, surfs);
+  for (const auto& surf : surfs) {
+    EntityHandle root;
+    ErrorCode rval = get_root(surf, root);
+    if (rval == MB_SUCCESS) { delete_obb_tree(surf); }
+  }
 
   if (moab_instance_created) {
     MBI->delete_mesh();
