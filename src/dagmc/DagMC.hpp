@@ -150,33 +150,6 @@ class DagMC : public GeomTopoTool, public GeomQueryTool {
    */
   typedef GeomQueryTool::RayHistory RayHistory;
 
-  // ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
-  //                    const double ray_dir[3], EntityHandle& next_surf,
-  //                    double& next_surf_dist,
-  //                    RayHistory* history = NULL,
-  //                    double dist_limit = 0, int ray_orientation = 1,
-  //                    OrientedBoxTreeTool::TrvStats* stats = NULL);
-
-  // ErrorCode point_in_volume(const EntityHandle volume, const double xyz[3],
-  //                           int& result, const double* uvw = NULL,
-  //                           const RayHistory* history = NULL);
-
-  // ErrorCode point_in_volume_slow(const EntityHandle volume, const double xyz[3],
-  //                                int& result);
-
-  // ErrorCode test_volume_boundary(const EntityHandle volume,
-  //                                const EntityHandle surface,
-  //                                const double xyz[3], const double uvw[3],
-  //                                int& result,
-  //                                const RayHistory* history = NULL);
-
-  // ErrorCode closest_to_location(EntityHandle volume, const double point[3],
-  //                               double& result, EntityHandle* surface = 0);
-
-  // ErrorCode measure_volume(EntityHandle volume, double& result);
-
-  // ErrorCode measure_area(EntityHandle surface, double& result);
-
   ErrorCode surface_sense(EntityHandle volume, int num_surfaces,
                           const EntityHandle* surfaces, int* senses_out);
 
@@ -186,9 +159,6 @@ class DagMC : public GeomTopoTool, public GeomQueryTool {
   ErrorCode get_angle(EntityHandle surf, const double xyz[3], double angle[3],
                       const RayHistory* history = NULL);
 
-  // ErrorCode next_vol(EntityHandle surface, EntityHandle old_volume,
-  //                    EntityHandle& new_volume);
-
   /* SECTION III: Indexing & Cross-referencing */
  public:
   /** Most calling apps refer to geometric entities with a combination of
@@ -197,8 +167,6 @@ class DagMC : public GeomTopoTool, public GeomQueryTool {
    *  These method provide ways to translate from one to the other.
    */
 
-  /** map from dimension & global ID to EntityHandle */
-  //  EntityHandle entity_by_id(int dimension, int id);
   /** map from dimension & base-1 ordinal index to EntityHandle */
   EntityHandle entity_by_index(int dimension, int index);
   /** map from dimension & base-1 ordinal index to global ID */
@@ -364,10 +332,6 @@ class DagMC : public GeomTopoTool, public GeomQueryTool {
   /* SECTION VI: Other */
  public:
 
-  // OrientedBoxTreeTool* obb_tree() {return obb_tree();}
-
-  // GeomTopoTool* geom_tool() {return this;}
-
   ErrorCode write_mesh(const char* ffile,
                        const int flen);
 
@@ -377,9 +341,6 @@ class DagMC : public GeomTopoTool, public GeomQueryTool {
   /** get the center point and three vectors for the OBB of a given volume */
   ErrorCode getobb(EntityHandle volume, double center[3],
                    double axis1[3], double axis2[3], double axis3[3]);
-
-  /** get the root of the obbtree for a given entity */
-  //  ErrorCode get_root(EntityHandle vol_or_surf, EntityHandle& root);
 
   /** Get the instance of MOAB used by functions in this file. */
   Interface* moab_instance() {return MBI;}
@@ -446,12 +407,6 @@ inline ErrorCode DagMC::getobb(EntityHandle volume, double center[3],
   MB_CHK_SET_ERR(rval, "Failed to get obb for volume");
   return MB_SUCCESS;
 }
-
-// inline ErrorCode DagMC::get_root(EntityHandle vol_or_surf, EntityHandle& root) {
-//   ErrorCode rval = get_root(vol_or_surf, root);
-//   MB_CHK_SET_ERR(rval, "Failed to get obb root set of volume or surface");
-//   return MB_SUCCESS;
-// }
 
 } // namespace moab
 
