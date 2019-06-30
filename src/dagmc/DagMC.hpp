@@ -12,7 +12,7 @@
 #include "moab/GeomQueryTool.hpp"
 #include "DagMCVersion.hpp"
 
-#include "RTI.hpp"
+
 
 #include <vector>
 #include <map>
@@ -27,6 +27,7 @@ struct DagmcVolData {
   std::string comp_name;
 };
 
+class RayTracingInterface;
 
 namespace moab {
 

@@ -22,6 +22,7 @@
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 
 #ifdef DOUBLE_DOWN
+#include "RTI.hpp"
 #include "MOABRay.h"
 #endif
 
