@@ -282,7 +282,7 @@ macro (dagmc_install_test test_name ext)
     else ()
       set_target_properties(${test_name}
         PROPERTIES INSTALL_RPATH "${INSTALL_RPATH_DIRS}"
-                   INSTALL_RPATH_USE_LINK_PATH TRUE)
+                   INSTALL_RPATH_USE_LINK_PATH FALSE)
       target_link_libraries(${test_name} ${LINK_LIBS_SHARED})
     endif ()
   else ()
@@ -294,7 +294,7 @@ macro (dagmc_install_test test_name ext)
   endif ()
   install(TARGETS ${test_name} DESTINATION ${INSTALL_TESTS_DIR})
   add_test(NAME ${test_name} COMMAND ${test_name})
-  set_property(TEST ${test_name} PROPERTY ENVIRONMENT "LD_LIBRARY_PATH=''")
+  #set_property(TEST ${test_name} PROPERTY ENVIRONMENT "LD_LIBRARY_PATH=''")
 endmacro ()
 
 # Install a file needed for unit testing
