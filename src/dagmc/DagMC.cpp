@@ -206,7 +206,7 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  rval = RTI->init();
+  rval = RTI->init("", true);
   MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
 
   // rval = setup_obbs();
