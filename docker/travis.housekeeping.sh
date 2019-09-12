@@ -6,6 +6,7 @@ source ${docker_env}
 
 cd ${dagmc_build_dir}/DAGMC
 
+
 # Check for news file if this is a PR into svalinn/DAGMC
 if [ "${TRAVIS_REPO_SLUG}" == "svalinn/DAGMC" ] && \
    [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
@@ -29,12 +30,25 @@ astyle --options=astyle_google.ini \
        --verbose \
        --formatted \
        "*.cc" "*.cpp" "*.h" "*.hh" "*.hpp"
-astyle_diffs=`git status --porcelain`
-if [ -z "${astyle_diffs}" ]; then
+astyle_status=`git status --porcelain`
+astyle_diff=`git diff`
+if [ -z "${astyle_status}" ]; then
   echo "Style guide checker passed!"
 else
   echo "ERROR: Style guide checker failed. Please run astyle."
-  echo "astyle_diffs: ${astyle_diffs}"
+  echo "Files changed:"
+  echo "${astyle_status}"
+
+  diff_line=$(echo $astyle_diff | wc -l)
+  if [ $diff_lines -ge 100 ]; then
+      echo "Diff is too large. Please run astyle on your repo."
+  else
+      echo "Diff:"
+      # need to re-run to maintain formatting
+      git diff | cat
+  fi
+
+
   exit 1
 fi
 

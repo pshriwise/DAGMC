@@ -33,13 +33,13 @@ namespace moab {
                    of results
 */
 
-const bool counting = false; /* controls counts of ray casts and pt_in_vols */
+const bool counting =         false; /* controls counts of ray casts and pt_in_vols */
 
 // Empty synonym map for DagMC::parse_metadata()
 const std::map<std::string, std::string> DagMC::no_synonyms;
 
 // DagMC Constructor
-DagMC::DagMC(Interface* mb_impl, double overlap_tolerance, double p_numerical_precision) {
+DagMC::DagMC(Interface* mb_impl, double overlap_tolerance,   double p_numerical_precision) {
   moab_instance_created = false;
   // if we arent handed a moab instance create one
   if (NULL == mb_impl) {
