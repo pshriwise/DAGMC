@@ -19,17 +19,8 @@ if [ "${TRAVIS_REPO_SLUG}" == "svalinn/DAGMC" ] && \
   fi
 fi
 
-# Run astyle check
-astyle --options=astyle_google.ini \
-       --exclude=src/gtest \
-       --exclude=src/mcnp/mcnp5/Source \
-       --exclude=src/mcnp/mcnp6/Source \
-       --ignore-exclude-errors \
-       --suffix=none \
-       --recursive \
-       --verbose \
-       --formatted \
-       "*.cc" "*.cpp" "*.h" "*.hh" "*.hpp"
+./run_astyle.sh
+
 astyle_status=`git status --porcelain`
 astyle_diff=`git diff`
 if [ -z "${astyle_status}" ]; then
@@ -41,7 +32,9 @@ else
 
   diff_line=$(echo $astyle_diff | wc -l)
   if [ $diff_lines -ge 100 ]; then
-      echo "Diff is too large. Please run astyle on your repo."
+      echo "Diff is too large to show here"
+      echo "Please apply the style guide using /scripts/run_astyle.sh in the DagMC repo."
+
   else
       echo "Diff:"
       # need to re-run to maintain formatting
