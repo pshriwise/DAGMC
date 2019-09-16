@@ -19,7 +19,7 @@ if [ "${TRAVIS_REPO_SLUG}" == "svalinn/DAGMC" ] && \
   fi
 fi
 
-./run_astyle.sh
+${dagmc_build_dir}/scripts/run_astyle.sh
 
 astyle_status=`git status --porcelain`
 astyle_diff=`git diff`
