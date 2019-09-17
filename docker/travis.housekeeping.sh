@@ -19,28 +19,29 @@ if [ "${TRAVIS_REPO_SLUG}" == "svalinn/DAGMC" ] && \
   fi
 fi
 
-./scripts/run_astyle.sh
+./scripts/apply_style_guide.sh
 
 astyle_status=`git status --porcelain`
 astyle_diff=`git diff`
 if [ -z "${astyle_status}" ]; then
-  echo "Style guide checker passed!"
+    echo "Style guide checker passed!"
 else
-  echo "ERROR: Style guide checker failed. Please run astyle."
-  echo "Files changed:"
-  echo "${astyle_status}"
+    echo "ERROR: Style guide checker failed."
+    echo "Files changed:"
+    echo "${astyle_status}"
 
-  diff_line=$(echo $astyle_diff | wc -l)
-  if [ $diff_lines -ge 100 ]; then
-      echo "Diff is too large to show here"
-      echo "Please apply the style guide using /scripts/run_astyle.sh in the DagMC repo."
+    # if the diff is small, display it
+    n_diff_lines=$(echo $astyle_diff | wc -l)
+    if [ $n_diff_lines -ge 50 ]; then
+        echo "Diff is too large to show here"
+    else
+        echo "Diff:"
+        # need to re-run to maintain formatting
+        git diff | cat
+    fi
 
-  else
-      echo "Diff:"
-      # need to re-run to maintain formatting
-      git diff | cat
-  fi
-
+    echo "Please apply the style guide using /scripts/apply_style_guide.sh"
+    echo "from the root directory of the DagMC repo."
 
   exit 1
 fi
