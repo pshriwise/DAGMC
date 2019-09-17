@@ -42,7 +42,7 @@ const std::map<std::string, std::string> DagMC::no_synonyms;
 DagMC::DagMC(Interface* mb_impl, double overlap_tolerance,   double p_numerical_precision) {
   moab_instance_created = false;
   // if we arent handed a moab instance create one
-  if (NULL == mb_impl) {
+  if(NULL == mb_impl)   {
     mb_impl = new moab::Core();
     moab_instance_created = true;
   }
