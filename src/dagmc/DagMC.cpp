@@ -369,7 +369,12 @@ ErrorCode DagMC::surface_sense(EntityHandle volume, EntityHandle surface,
 ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3],
                            const RayHistory* history) {
-  ErrorCode rval = GQT->get_normal(surf, in_pt, angle, history);
+moab::ErrorCode rval;
+#ifdef DOUBLE_DOWN
+  RTI->get_normal(surf, in_pt, angle, history && history->prev_facets.size() ? history->prev_facets.back() : 0);
+#else 
+  rval = GQT->get_normal(surf, in_pt, angle, history);
+#endif
   return rval;
 }
 
