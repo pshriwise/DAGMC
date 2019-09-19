@@ -366,6 +366,7 @@ class DagMC {
   OrientedBoxTreeTool* obb_tree() {return GTT->obb_tree();}
 
   GeomTopoTool* geom_tool() {return GTT;}
+  GeomQueryTool* query_tool() {return GQT;}
 
   ErrorCode write_mesh(const char* ffile,
                        const int flen);
