@@ -371,7 +371,14 @@ ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            const RayHistory* history) {
 moab::ErrorCode rval;
 #ifdef DOUBLE_DOWN
-  RTI->get_normal(surf, in_pt, angle, history && history->prev_facets.size() ? history->prev_facets.back() : 0);
+  EntityHandle facet = 0;
+  if (history) {
+    rval = history->get_last_intersection(facet);
+    if (rval != MB_SUCCESS && rval != MB_ENTITY_NOT_FOUND) {
+      MB_CHK_SET_ERR(rval, "Failure in getting last facet");
+    }
+  }
+  RTI->get_normal(surf, in_pt, angle, facet);
 #else 
   rval = GQT->get_normal(surf, in_pt, angle, history);
 #endif
