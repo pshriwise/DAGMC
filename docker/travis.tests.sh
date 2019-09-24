@@ -7,7 +7,7 @@ source ${docker_env}
 cd ${dagmc_build_dir}/DAGMC
 
 # clean out config test directory for next build
-git clean -dxf . 
+git clean -dxf .
 
 # Test DAGMC CMake configuration file
 cd ${dagmc_build_dir}/DAGMC/cmake/test_config
@@ -25,6 +25,7 @@ if [ "${TRAVIS_PULL_REQUEST}" == "false" ]; then
 fi
 
 # Run the unit tests
+ctest --verbose
 make test
 
 # Delete regression test files
