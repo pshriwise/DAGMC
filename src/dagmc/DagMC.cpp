@@ -206,7 +206,7 @@ ErrorCode DagMC::init_OBBTree() {
   MB_CHK_SET_ERR(rval, "Failed to setup the implicit compliment");
 
   // build obbs
-  rval = RTI->init("", true);
+  rval = RTI->init();
   MB_CHK_SET_ERR(rval, "Failed to initialized the RTI.");
 
   // rval = setup_obbs();
@@ -379,7 +379,7 @@ moab::ErrorCode rval;
     }
   }
   RTI->get_normal(surf, in_pt, angle, facet);
-#else 
+#else
   rval = GQT->get_normal(surf, in_pt, angle, history);
 #endif
   return rval;
