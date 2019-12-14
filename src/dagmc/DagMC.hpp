@@ -148,7 +148,10 @@ class DagMC {
   /** The methods in this section are thin wrappers around methods in the
    *  GeometryQueryTool.
    */
+  #ifdef DOUBLE_DOWN
+  #else
   typedef GeomQueryTool::RayHistory RayHistory;
+  #endif
 
   ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
                      const double ray_dir[3], EntityHandle& next_surf,
@@ -391,7 +394,10 @@ class DagMC {
   bool moab_instance_created;
 
   GeomTopoTool* GTT;
+  #ifdef DOUBLE_DOWN
+  #else
   GeomQueryTool* GQT;
+  #endif
 
  public:
   Tag  nameTag, facetingTolTag;

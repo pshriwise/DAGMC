@@ -16,6 +16,11 @@ dagmc_setup_build()
 dagmc_setup_options()
 
 find_package(MOAB REQUIRED)
+if (DOUBLE_DOWN)
+  find_package(DOUBLE_DOWN REQUIRED)
+  set(DOUBLE_DOWN_SHARED dd)
+  set(DOUBLE_DOWN_STATIC dd)
+endif()
 
 dagmc_setup_flags()
 
