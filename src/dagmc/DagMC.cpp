@@ -168,7 +168,7 @@ ErrorCode DagMC::setup_obbs() {
   // If we havent got an OBB Tree, build one.
   if (!GTT->have_obb_tree()) {
     std::cout << "Building OBB Tree..." << std::endl;
-    rval = GTT->construct_obb_trees();
+    rval = GTT->construct_obb_trees(true);
     MB_CHK_SET_ERR(rval, "Failed to build obb trees");
   }
   return MB_SUCCESS;
@@ -270,6 +270,12 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                                  history, user_dist_limit, ray_orientation,
                                  stats);
   return rval;
+}
+
+ErrorCode DagMC::find_volume(const double xyz[3],
+                             EntityHandle& volume,
+                             const double* dir) {
+  return GQT->find_volume(xyz, volume, dir);
 }
 
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],

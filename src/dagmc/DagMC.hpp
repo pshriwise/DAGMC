@@ -157,6 +157,10 @@ class DagMC {
                      double dist_limit = 0, int ray_orientation = 1,
                      OrientedBoxTreeTool::TrvStats* stats = NULL);
 
+  ErrorCode find_volume(const double xyz[3],
+                               EntityHandle& volume,
+                               const double* dir = NULL);
+
   ErrorCode point_in_volume(const EntityHandle volume, const double xyz[3],
                             int& result, const double* uvw = NULL,
                             const RayHistory* history = NULL);
