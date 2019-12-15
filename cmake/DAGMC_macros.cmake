@@ -155,6 +155,10 @@ macro (dagmc_get_link_libs)
   set(LINK_LIBS_SHARED)
   set(LINK_LIBS_STATIC)
 
+  if (DOUBLE_DOWN)
+    list(APPEND LINK_LIBS_SHARED dd)
+  endif()
+
   foreach (extern_name IN LISTS LINK_LIBS_EXTERN_NAMES)
     list(APPEND LINK_LIBS_SHARED ${${extern_name}_SHARED})
     list(APPEND LINK_LIBS_STATIC ${${extern_name}_STATIC})
@@ -202,8 +206,9 @@ macro (dagmc_install_library lib_name)
       set_target_properties(${lib_name}-shared
         PROPERTIES INSTALL_RPATH "${INSTALL_RPATH_DIRS}"
                    INSTALL_RPATH_USE_LINK_PATH TRUE)
-    endif ()
-    target_link_libraries(${lib_name}-shared ${LINK_LIBS_SHARED})
+               endif ()
+               message("LINK LIBS: ${LINK_LIBS_SHARED}")
+    target_link_libraries(${lib_name}-shared PUBLIC ${LINK_LIBS_SHARED})
     install(TARGETS ${lib_name}-shared
             LIBRARY DESTINATION ${INSTALL_LIB_DIR}
             PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR})
