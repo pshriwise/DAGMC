@@ -153,11 +153,14 @@ class DagMC {
   /** The methods in this section are thin wrappers around methods in the
    *  GeometryQueryTool.
    */
-  #ifdef DOUBLE_DOWN
-  typedef std::vector<moab::EntityHandle> RayHistory;
-  #else
+  // #ifdef DOUBLE_DOWN
+  // using RayHistory = std::vector<moab::EntityHandle>;
+  // //  typedef std::vector<moab::EntityHandle> RayHistory;
+  // #else
+  // using RayHistory = GeomQueryTool::RayHistory;
+  // #endif
+
   typedef GeomQueryTool::RayHistory RayHistory;
-  #endif
 
   ErrorCode ray_fire(const EntityHandle volume, const double ray_start[3],
                      const double ray_dir[3], EntityHandle& next_surf,
@@ -400,11 +403,14 @@ class DagMC {
   bool moab_instance_created;
 
   GeomTopoTool* GTT;
-  #ifdef DOUBLE_DOWN
-  RayTracingInterface* GQT;
-  #else
-  GeomQueryTool* GQT;
-  #endif
+  // type alias for ray tracing engine
+#ifdef DOUBLE_DOWN
+  using RayTracer = RayTracingInterface;
+#else
+  using RayTracer = GeomQueryTool;
+#endif
+
+  RayTracer* GQT;
 
  public:
   Tag  nameTag, facetingTolTag;
