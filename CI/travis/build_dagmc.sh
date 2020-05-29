@@ -41,6 +41,7 @@ function build_dagmc() {
                -DCMAKE_INSTALL_PREFIX=${install_dir}
   make -j${jobs}
   make install
+
 }
 
 build_dagmc "static"
