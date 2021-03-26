@@ -19,8 +19,8 @@
 #endif
 
 #ifdef DOUBLE_DOWN
-#include "MOABRay.h"
-#include "RTI.hpp"
+#include "double-down/MOABRay.h"
+#include "double-down/RTI.hpp"
 #endif
 
 #define MB_OBB_TREE_TAG_NAME "OBB_TREE"
