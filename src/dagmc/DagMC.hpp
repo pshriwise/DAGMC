@@ -46,10 +46,6 @@ static const int groups_handle_idx = 4;
 static const std::string GRAVEYARD_NAME = "mat:graveyard";
 struct MBRayAccum : MBRay { int sum; int num_hit; };
 
-
-namespace moab {
-
-
 class CartVect;
 class GeomQueryTool;
 

@@ -5,7 +5,7 @@
 #  MBVH_INCLUDE - the MOAB include directory
 
 find_path(MBVH_CMAKE_CONFIG NAMES MBVHConfig.cmake
-          HINTS ${MBVH_ROOT}
+          HINTS ${MBVH_DIR}
           PATHS ENV LD_LIBRARY_PATH
           PATH_SUFFIXES lib Lib cmake cmake/MBVH
           NO_DEFAULT_PATH)

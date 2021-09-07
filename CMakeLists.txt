@@ -59,62 +59,16 @@ find_package(OpenMP)
 cmake_minimum_required(VERSION 2.8)
 SET(CMAKE_CXX_STANDARD 11)
 
-# Setup test macro
-macro (setup_test test_name ext driver libs)
-  set(drivers ${driver})
-  # Convert driver from string to list
-  string(STRIP "${drivers}" drivers)
-  string(REGEX REPLACE "[ ]+" " " drivers "${drivers}")
-  string(REPLACE " " ";" drivers "${drivers}")
-  add_executable(${test_name} ${test_name}.${ext} ${drivers})
-  target_link_libraries(${test_name} ${libs})
-  install(TARGETS ${test_name} DESTINATION tests)
-  add_test(${test_name} ${test_name})
-endmacro (setup_test)
-
-# Run test macro
-macro(run_test test_target)
-  add_custom_target(${test_target}_runtest COMMAND ${test_target}
-                                           DEPENDS ${test_target}
-                                           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  add_dependencies(${test_target}_runtest gtest)
-endmacro (run_test)
-
-# Installation directories
-set(INSTALL_BIN_DIR     bin     CACHE PATH "Installation directory for executables")
-set(INSTALL_LIB_DIR     lib     CACHE PATH "Installation directory for libraries")
-set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
-set(INSTALL_SHARE_DIR   share   CACHE PATH "Installation directory for other files")
-
-set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "")
-set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
-set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
-set(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES "")
-set(CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES "")
-
-# Determine if we're building static executables
-option(BUILD_STATIC "Build static executables" OFF)
-if (BUILD_STATIC)
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
-    set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
-  endif (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
-else ()
-  set(BUILD_SHARED ON)
-endif (BUILD_STATIC)
-
 # Allow use of find_package(HDF5), find_package(MOAB), etc.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 # find the gfortran library name, this is required for OS/X which uses a variety
 # of package managers to install gfortan and caould be in a number of places
-if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-  find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran
-                                PATHS /usr/local/lib/gcc/* /lib /lib64 /usr/lib
-                                      /usr/lib64 /usr/lib/gcc/*/*)
-endif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+# if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+#   find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran
+#                                 PATHS /usr/local/lib/gcc/* /lib /lib64 /usr/lib
+#                                       /usr/lib64 /usr/lib/gcc/*/*)
+# endif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 
 # Make sure we have HDF5
 find_package(HDF5 REQUIRED)
@@ -151,9 +105,6 @@ execute_process(COMMAND uname -s       OUTPUT_VARIABLE ENV_OS   OUTPUT_STRIP_TRA
 execute_process(COMMAND date +%m/%d/%y OUTPUT_VARIABLE ENV_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND date +%H:%M:%S OUTPUT_VARIABLE ENV_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-# Build Gtest
-add_subdirectory(gtest)
-
 # Figure out which physics codes to build
 if (BUILD_ALL)
   set(BUILD_MCNP5 ON)
@@ -164,14 +115,6 @@ endif (BUILD_ALL)
 if (BUILD_MCNP5 OR BUILD_MCNP6)
   set(BUILD_TALLY ON)
 endif (BUILD_MCNP5 OR BUILD_MCNP6)
-
-# Build pyne_dagmc library
-add_subdirectory(pyne)
-
-# Build dagtally library
-if (BUILD_TALLY)
-  add_subdirectory(tally)
-endif (BUILD_TALLY)
 
 # Build MCNP
 if (BUILD_MCNP5 OR BUILD_MCNP6)
