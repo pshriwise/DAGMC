@@ -28,4 +28,10 @@ if(@DOUBLE_DOWN@)
                HINTS @dd_CMAKE_CONFIG@)
 endif()
 
+if(@MBVH_FOUND@)
+find_package(MBVH REQUIRED
+             NAMES MBVH
+             HINTS @MBVH_CMAKE_CONFIG@)
+endif()
+
 include(@CMAKE_INSTALL_PREFIX@/lib/cmake/DAGMCTargets.cmake)
