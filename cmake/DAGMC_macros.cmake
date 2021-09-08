@@ -235,7 +235,7 @@ macro (dagmc_install_library lib_name)
       target_link_libraries(${lib_name}-shared PUBLIC dd)
     endif()
     if (MBVH_FOUND)
-      target_compile_definitions(${lib_name}-shared PRIVATE SIMD_BVH)
+      target_compile_definitions(${lib_name}-shared PUBLIC SIMD_BVH)
       target_link_libraries(${lib_name}-shared PUBLIC MBVH)
     endif()
     target_include_directories(${lib_name}-shared INTERFACE $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
