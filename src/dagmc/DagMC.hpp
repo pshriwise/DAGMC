@@ -36,6 +36,7 @@ struct DagmcVolData {
 
 class RayTracingInterface;
 
+
 namespace moab {
 
 static const int vertex_handle_idx = 0;
@@ -44,7 +45,6 @@ static const int surfs_handle_idx = 2;
 static const int vols_handle_idx = 3;
 static const int groups_handle_idx = 4;
 static const std::string GRAVEYARD_NAME = "mat:graveyard";
-struct MBRayAccum : MBRay { int sum; int num_hit; };
 
 class CartVect;
 class GeomQueryTool;

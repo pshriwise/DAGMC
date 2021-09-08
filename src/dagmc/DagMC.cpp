@@ -29,6 +29,41 @@
 #define FACETING_TOL_TAG_NAME "FACETING_TOL"
 static const int null_delimiter_length = 1;
 
+#ifdef SIMD_BVH
+
+struct MBRayAccum : MBRay { int sum; int num_hit; };
+
+double dot_prod(MBRay ray) {
+  moab::CartVect ray_dir(ray.dir[0], ray.dir[1], ray.dir[2]);
+  moab::CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
+  return ray_dir % tri_norm;
+}
+
+void backface_cull(MBRay &ray, void*) {
+
+  if(dot_prod(ray) < 0.0) {
+    ray.geomID = -1;
+    ray.primID = -1;
+  }
+}
+
+void count_hits(MBRayAccum &ray, void*) {
+
+  if (dot_prod(ray) > 0.0) {
+    ray.sum -= 1; // leaving
+  }
+  else {
+    ray.sum += 1; // entering
+  }
+
+  ray.geomID = -1;
+  ray.primID = -1;
+
+  ray.num_hit++;
+  return;
+}
+#endif
+
 namespace moab {
 
 /* Tolerance Summary
@@ -53,6 +88,9 @@ DagMC::DagMC(std::shared_ptr<moab::Interface> mb_impl, double overlap_tolerance,
   std::cout << "Using the DOUBLE-DOWN interface to Embree." << std::endl;
 #endif
 
+#ifdef SIMD_BVH
+  std::cout << "Using the Mixed-Precision SIMD BVH (MPBVH)." << std::endl;
+#endif
   moab_instance_created = false;
   // if we arent handed a moab instance create one
   if (nullptr == mb_impl) {
@@ -651,6 +689,12 @@ ErrorCode DagMC::init_OBBTree() {
   rval = setup_indices();
   MB_CHK_SET_ERR(rval, "Failed to setup problem indices");
 
+#ifdef SIMD_BVH
+  MBVH = new MBVHManager(MBI);
+  rval = MBVH->build_all();
+  MB_CHK_SET_ERR(rval, "Failed to build the BVH");
+#endif
+
   return MB_SUCCESS;
 }
 
@@ -742,18 +786,129 @@ ErrorCode DagMC::ray_fire(const EntityHandle volume, const double point[3],
                           double& next_surf_dist, RayHistory* history,
                           double user_dist_limit, int ray_orientation,
                           OrientedBoxTreeTool::TrvStats* stats) {
-  ErrorCode rval =
-      ray_tracer->ray_fire(volume, point, dir, next_surf, next_surf_dist,
-                           history, user_dist_limit, ray_orientation, stats);
+
+#ifdef SIMD_BVH
+
+  MBRay ray(point, dir);
+  ray.instID = volume;
+  if(ray_orientation == 1) {
+    MBVH->MOABBVH->set_filter(backface_cull);
+  }
+  else {
+    MBVH->MOABBVH->unset_filter();
+  }
+  ErrorCode rval = MBVH->fireRay(ray);
+  MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
+
+  // if we missed, check behind for a hit
+  if( ray.geomID == -1 && ray_tracer->get_overlap_thickness() != 0.0 ) {
+    ray.tnear = 1e-06;
+    ray.tfar = ray_tracer->get_overlap_thickness();
+    ray.dir = - ray.dir;
+    MBVH->MOABBVH->unset_filter();
+    ErrorCode rval = MBVH->fireRay(ray);
+    MB_CHK_SET_ERR(rval, "Failed to fire ray on MBVH");
+
+    // distance should technically be zero if we've found a negative distance hit
+    ray.tfar = 0;
+  }
+
+  if ( ray.geomID != -1) {
+    next_surf_dist = ray.tfar;
+    next_surf = ray.geomID;
+  }
+  else {
+    next_surf_dist = ray.tfar;
+    next_surf = 0;
+  }
+
+  if( history ) {
+    history->add_entity(ray.primID);
+  }
+
   return rval;
+
+#endif
+
+  return ray_tracer->ray_fire(volume, point, dir, next_surf, next_surf_dist,
+                              history, user_dist_limit, ray_orientation, stats);
 }
 
 ErrorCode DagMC::point_in_volume(const EntityHandle volume, const double xyz[3],
                                  int& result, const double* uvw,
                                  const RayHistory* history) {
-  ErrorCode rval =
-      ray_tracer->point_in_volume(volume, xyz, result, uvw, history);
+
+#ifdef SIMD_BVH
+  double dir[3] { 0.0, 0.0, 0.0 };
+
+  if ( uvw ) {
+    dir[0] = uvw[0]; dir[1] = uvw[1]; dir[2] = uvw[2];
+  }
+
+  if( dir[0] == 0 && dir[1] == 0 && dir[2] == 0 )
+    {
+      srand(51);
+      dir[0] = rand();
+      dir[1] = rand();
+      dir[2] = rand();
+      const double magnitude = sqrt( dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2] );
+      dir[0] /= magnitude;
+      dir[1] /= magnitude;
+      dir[2] /= magnitude;
+    }
+
+
+  MBRay ray(xyz, dir);
+  ray.instID = volume;
+  MBVH->MOABBVH->unset_filter();
+  ErrorCode rval = MBVH->fireRay(ray);
+  MB_CHK_SET_ERR(rval, "Failed to fire ray using MBVH");
+
+  CartVect ray_dir(dir);
+  CartVect tri_norm(ray.Ng[0], ray.Ng[1], ray.Ng[2]);
+
+  if(ray.geomID != -1) {
+    result = (ray_dir % tri_norm) > 0.0 ? 1 : 0;
+    return rval;
+  }
+  else {
+    result = 0;
+  }
+
+  if (ray_tracer->get_overlap_thickness() != 0.0 ) {
+    MBRayAccum aray;
+    aray.org = xyz;
+    aray.dir = dir;
+    aray.instID = volume;
+    aray.tfar = inf;
+    aray.tnear = 0.0;
+    aray.sum = 0;
+    aray.num_hit = 0;
+    MBVH->MOABBVH->set_filter((MBVH::Filter::FilterFunc)count_hits);
+    rval = MBVH->fireRay(ray);
+    if( aray.num_hit == 0 ) { result = 0; return rval; }
+    int hits = aray.num_hit;
+    // reset and fire in negative direction
+    aray.geomID = -1;
+    aray.primID = -1;
+    aray.tfar = inf;
+    aray.tnear = 0.0;
+    aray.dir = aray.dir * -1;
+    rval = MBVH->fireRay(aray);
+    if (aray.num_hit == hits ) { result = 0; return rval; }
+
+    // inside/outside depends on the sum
+    if      (0 < aray.sum)                                          result = 0; // pt is outside (for all vols)
+    else if (0 > aray.sum)                                          result = 1; // pt is inside  (for all vols)
+    else if ( GTT->is_implicit_complement(volume) )                 result = 1; // pt is inside  (for impl_compl_vol)
+    else                                                            result = 0; // pt is outside (for all other vols)
+  }
+
   return rval;
+#endif
+
+
+  return ray_tracer->point_in_volume(volume, xyz, result, uvw, history);
 }
 
 ErrorCode DagMC::test_volume_boundary(const EntityHandle volume,
@@ -810,8 +965,48 @@ ErrorCode DagMC::surface_sense(EntityHandle volume, EntityHandle surface,
 
 ErrorCode DagMC::get_angle(EntityHandle surf, const double in_pt[3],
                            double angle[3], const RayHistory* history) {
-  ErrorCode rval = ray_tracer->get_normal(surf, in_pt, angle, history);
-  return rval;
+
+#ifdef SIMD_BVH
+
+  if ( history && history->size() ){
+    CartVect coords[3], normal(0.0);
+    const EntityHandle* conn;
+    int len = 0;
+    EntityHandle facet;
+    history->get_last_intersection(facet);
+
+    ErrorCode rval = MBI->get_connectivity( facet, conn, len );
+    MB_CHK_SET_ERR(rval, "Failed to get facet connectivity");
+    if(3 != len) {
+      MB_SET_ERR(MB_FAILURE, "Incorrect connectivity length for triangle");
+    }
+
+    rval = MBI->get_coords( conn, 3, coords[0].array() );
+    MB_CHK_SET_ERR(rval, "Failed to get vertex coordinates");
+
+    coords[1] -= coords[0];
+    coords[2] -= coords[0];
+    normal += coords[1] * coords[2];
+
+    normal.normalize();
+    normal.get( angle );
+
+    return MB_SUCCESS;
+  }
+
+  MBRay ray(in_pt, {0.0, 0.0, 0.0});
+  ray.geomID = surf;
+  ErrorCode rval = MBVH->closestToLocationSurf(ray);
+
+
+  angle[0] = ray.Ng[0];
+  angle[1] = ray.Ng[1];
+  angle[2] = ray.Ng[2];
+
+  return MB_SUCCESS;
+#endif
+
+  return ray_tracer->get_normal(surf, in_pt, angle, history);
 }
 
 ErrorCode DagMC::next_vol(EntityHandle surface, EntityHandle old_volume,
