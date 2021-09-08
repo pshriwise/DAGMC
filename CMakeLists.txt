@@ -64,7 +64,6 @@ if(MBVH_FOUND)
   add_definitions(-DSIMD_BVH)
   link_directories(${MBVH_LIBRARY_DIRS})
   include_directories(${MBVH_INCLUDE_DIRS})
-  list(APPEND DAG_LINK_LIBS ${MBVH_LIBRARIES})
 endif()
 
 dagmc_setup_flags()
