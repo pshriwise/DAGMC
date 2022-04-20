@@ -207,9 +207,9 @@ void dagmcMetaData::parse_material_data() {
     volume_material_property_data_eh[eh] = grp_name;
     std::cout << "Group name -- " << grp_name << std::endl;
     bool is_graveyard =
-      to_lower(grp_name) == "mat:" + to_lower(graveyard_str);
+      to_lower(grp_name) == to_lower(graveyard_mat_str);
     bool is_vacuum =
-        to_lower(grp_name) == "mat:" + to_lower(vacuum_str);
+        to_lower(grp_name) == to_lower(vacuum_mat_str);
 
     // not graveyard or vacuum or implicit compliment
     if (!is_graveyard && !is_vacuum && !DAG->is_implicit_complement(eh)) {
@@ -217,19 +217,19 @@ void dagmcMetaData::parse_material_data() {
     }
     // found graveyard
     else if (is_graveyard) {
-      volume_material_property_data_eh[eh] = "mat:Graveyard";
+      volume_material_property_data_eh[eh] = graveyard_mat_str;
       volume_material_data_eh[eh] = graveyard_str;
     }
     // vacuum
     else if (is_vacuum) {
-      volume_material_property_data_eh[eh] = "mat:Vacuum";
+      volume_material_property_data_eh[eh] = vacuum_mat_str;
       volume_material_data_eh[eh] = vacuum_str;
     }
     // implicit complement
     else if (DAG->is_implicit_complement(eh)) {
       if (implicit_complement_material == "") {
         std::cout << "Implicit Complement assumed to be Vacuum" << std::endl;
-        volume_material_property_data_eh[eh] = "mat:Vacuum";
+        volume_material_property_data_eh[eh] = vacuum_mat_str;
         volume_material_data_eh[eh] = vacuum_str;
       } else {
         volume_material_property_data_eh[eh] =
