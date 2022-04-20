@@ -109,6 +109,15 @@ class dagmcMetaData {
   // map of importance data
   std::map<moab::EntityHandle, std::map<std::string, double>> importance_map;
 
+  // Some constant keyword values
+  const std::string& graveyard_str() const { return graveyard_str_; }
+  const std::string& vacuum_str() const { return vacuum_str_; }
+  const std::string& vacuum_mat_str() const { return vacuum_mat_str_; }
+  const std::string& graveyard_mat_str() const { return graveyard_mat_str_; }
+  const std::string& reflecting_str() const { return reflecting_str_; }
+  const std::string& white_str() const { return white_str_; }
+  const std::string& periodic_str() const { return periodic_str_; }
+
   // private member variables
  private:
   moab::DagMC* DAG;  // Pointer to DAGMC instance
@@ -120,13 +129,13 @@ class dagmcMetaData {
       metadata_keywords;  // Keywords supported by the metadata manager
   std::map<std::string, std::string> keyword_synonyms;  // Keyword synonyms
   // Some constant keyword values
-  const std::string graveyard_str{"Graveyard"};
-  const std::string vacuum_str{"Vacuum"};
-  const std::string vacuum_mat_str{"mat:Vacuum"};
-  const std::string graveyard_mat_str{"mat:Graveyard"};
-  const std::string reflecting_str{"Reflecting"};
-  const std::string white_str{"White"};
-  const std::string periodic_str{"Periodic"};
+  const std::string graveyard_str_{"Graveyard"};
+  const std::string vacuum_str_{"Vacuum"};
+  const std::string vacuum_mat_str_{"mat:Vacuum"};
+  const std::string graveyard_mat_str_{"mat:Graveyard"};
+  const std::string reflecting_str_{"Reflecting"};
+  const std::string white_str_{"White"};
+  const std::string periodic_str_{"Periodic"};
 };
 
 #endif  // SRC_DAGMC_DAGMCMETADATA_HPP_
