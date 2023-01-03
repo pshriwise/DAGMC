@@ -32,26 +32,26 @@ jobs:
         ubuntu_versions : [
           18.04,
           20.04,
-          ]
+        ]
         compiler : [
           gcc,
           clang,
-          ]
+        ]
         hdf5_versions : [
          1.10.4,
         ]
         moab_versions : [
           5.3.0,
-          develop,
-          master,
+        ]
+        experimental : [ false,
         ]
         isPR:
           - ${{ contains(github.event_name, 'pull_request') }}
-        exclude:
-          - isPR: true
-            moab_versions: develop
-          - isPR: true
-            moab_versions: master
+        include:
+          - moab_versions: master
+            experimental: true
+          - moab_versions: develop
+            experimental: true
 
     container:
       image: ghcr.io/svalinn/dagmc-ci-ubuntu-${{ matrix.ubuntu_versions }}-${{ matrix.compiler }}-ext-hdf5_${{ matrix.hdf5_versions }}-moab_${{ matrix.moab_versions }}:stable
@@ -74,11 +74,13 @@ jobs:
           ln -s $GITHUB_WORKSPACE /root/build_dir/DAGMC
 
       - name: Building DAGMC
+        continue-on-error: ${{ matrix.experimental }}
         run: |
           cd $GITHUB_WORKSPACE
           CI/scripts/install.sh
 
       - name: Testing DAGMC
+        continue-on-error: ${{ matrix.experimental }}
         run: |
           cd $GITHUB_WORKSPACE
           CI/scripts/tests.sh
