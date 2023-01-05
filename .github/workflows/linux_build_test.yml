@@ -73,6 +73,10 @@ jobs:
           echo "PYTHONPATH="/root/build_dir/moab/bld/pymoab/lib/python3.6/site-packages:$PYTHONPATH"" >> $GITHUB_ENV
           ln -s $GITHUB_WORKSPACE /root/build_dir/DAGMC
 
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+
       - name: Building DAGMC
         continue-on-error: ${{ matrix.experimental }}
         run: |
