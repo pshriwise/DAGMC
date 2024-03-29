@@ -93,6 +93,15 @@ Due to the importance of using the ``group`` command reading the
 `CUBIT manual <CUBIT_manual_>`_
 section on its full usage is highly recommended.
 
+.. _coreform_metadata:
+
+Assinging Metadata to Volumes and Surfaces: Coreform Cubit
+----------------------------------------------------------
+
+Please refer to Coreform's `DAGMC Tutorial
+<https://coreform.com/products/coreform-cubit/tutorials/dagmc/tutorial_1/>`_ for
+more inform on how to apply DAGMC metadata for the integrated DAGMC export
+capability provided in Coreform Cubit (>= version 2023.8).
 
 .. _coreform_export:
 
