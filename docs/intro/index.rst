@@ -1,10 +1,18 @@
-..  _dagmc-for-you:
+..  _dagmc-intro:
 
-Is DAGMC For You?
-=================
+Introduction to DAGMC
+=====================
+
+DAGMC enables CAD-based geometry to be used in Monte Carlo particle transport
+simulations. This is achieved by converting CAD geometry into a form that can be
+used by Monte Carlo codes, such as MCNP, Geant4, and FLUKA. DAGMC is an
+open-source project that provides a toolkit for creating and manipulating
+CAD-based geometry for Monte Carlo simulations. It is built on top of the MOAB
+mesh database and provides a set of tools and libraries for importing,
+processing, and exporting CAD geometry for use in Monte Carlo simulations.
 
 
-Most Monte Carlo codes natively support :term:`CSG` geometry as it is very robust
+Most Monte Carlo codes natively support :term:`CSG` geometry as it is proven to be robust
 for particle tracking applications. However, use of  :term:`CAD` (Computer-Aided
 Design) geometry offers several advantages, especially in the context of modern
 engineering and design practices. :term:`CAD` geometry provides benefits in a
@@ -89,21 +97,17 @@ When using :term:`CAD` geometry for Monte Carlo simulations, the choice between
 
 **Disadvantages of Surface Mesh (Triangles)**
 
-1. **Limited Volume Representation**: Surface meshes do not capture the internal
-   volume of the object directly, which can limit their applicability for
-   simulations involving volumetric phenomena.
+1. **Limited Internal Representation**: Surface meshes do not capture proprety and
+   field variation within the volume of the object directly, which can limit
+   their applicability for simulations involving volumetric phenomena. Extrapolating
+   volume-based information from surface meshes can introduce uncertainties and
+   approximation errors.
 
 2. **Ray Tracing Operations**: While particles are able to travel from one
    surface to another in a volume containing a low- or zero-density material,
    the ray tracing operations involved in this process can be computationally
-   expensive compared to adjacency search when traversing volumetric elements.
-
-3. **Less Accurate Volume-based Results**: Since surface meshes do not directly
-   model the volume of the object, simulations relying on volumetric quantities
-   may yield less accurate results compared to volumetric meshes. Extrapolating
-   volume-based information from surface meshes can introduce uncertainties and
-   approximation errors.
-
+   expensive compared to adjacency search when traversing volumetric elements for
+   volumes with higher collision densities.
 **Advantages of Volumetric Mesh (Tetrahedra)**
 
 1. **Volume Representation**: Volumetric meshes directly represent the internal
@@ -120,8 +124,10 @@ When using :term:`CAD` geometry for Monte Carlo simulations, the choice between
 
 1. **Higher Computational Cost**: Generating and solving volumetric meshes can
    be computationally expensive, especially for large and complex geometries.
-   The presence of tetrahedral elements throughout the volume increases the
-   number of degrees of freedom and requires more computational resources.
+   The presence of tetrahedral elements throughout the model increases the
+   memory footprint and element traversal requires more computational resources,
+   in particular with respect to memory footprints of the mesh and associated
+   acceleration data structures.
 
 2. **Mesh Quality Concerns**: Ensuring high-quality tetrahedral meshes, such as
    avoiding element distortion or ensuring element aspect ratios, can be
