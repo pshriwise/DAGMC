@@ -1,4 +1,4 @@
-name: Build & Publish docker image for DAGMC-CI
+name: Build & Publish docker image
 
 on:
   # allows us to run workflows manually
@@ -15,7 +15,6 @@ jobs:
     strategy:
       matrix:
         ubuntu_version : [
-          20.04,
           22.04,
         ]
         compiler : [
@@ -23,15 +22,16 @@ jobs:
           clang,
         ]
         hdf5_version : [
-          1.14.3,
+          hdf5_1_14_3,
         ]
         moab_version : [
           5.4.1,
           5.5.1,
         ]
         geant4_version : [
-          10.7.4,
-          11.1.2
+          off,
+          v10.7.4,
+          v11.2.1,
         ]
         double_down_version : [
           off,
@@ -74,7 +74,7 @@ jobs:
         uses: firehed/multistage-docker-build-action@v1
         with:
           repository: ${{ env.image_base_tag }}
-          stages: base, external_deps, hdf5, moab, dagmc
+          stages: base, external_deps, dagmc, final
           server-stage: dagmc_test
           quiet: false
           parallel: true
@@ -96,7 +96,6 @@ jobs:
     strategy:
       matrix:
         ubuntu_version : [
-          20.04,
           22.04,
         ]
         compiler : [
@@ -104,15 +103,16 @@ jobs:
           clang,
         ]
         hdf5_version : [
-          1.14.3,
+          hdf5_1_14_3,
         ]
         moab_version : [
           5.4.1,
           5.5.1,
         ]
         geant4_version : [
-          10.7.4,
-          11.1.2
+          off,
+          v10.7.4,
+          v11.2.1,
         ]
         double_down_version : [
           off,
