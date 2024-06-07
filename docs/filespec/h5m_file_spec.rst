@@ -13,7 +13,7 @@ Geometric EntitySets¶
 ---------------------
 
 For an `.h5m` file to be used with :term:`DAGMC`, :term:`EntitySet`'s that are
-"tagged" specific information must be present. Only :term:`EntitySet`'s that are
+"tagged" with specific information must be present. Only :term:`EntitySet`'s that are
 tagged with the required information will be "seen" by the :term:`DAGMC`
 interface. These tags are used to identify the geometric entities (volumes,
 surfaces, curves, and vertices) as well as their relationships to each other.
@@ -50,6 +50,7 @@ to the transport code you intened to use.
 |                       |                  |            |      |             | indicates tht the surafce has a sense that is forward with respect to                                        |
 |                       |                  |            |      |             | the volume `EntityHandle` in that position. An entry in the second position                                  |
 |                       |                  |            |      |             | indicates that the surface has a sense reversed with respect to the volume `EntityHandle` in that position.  |
+|                       |                  |            |      |             | Only relevant for `EntitySet`s that represent a surface.                  |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
 | `GEOM_SENSE_N_ENTS`   | `EntityHandle`   | `uint64_t` | N    | `EntitySet` | Relates a curve to any topologically adjacent surface `EntitySet`s.                                          |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
@@ -123,4 +124,4 @@ Each surface is tagged with the two volume handles of the adjacent
 volumes. The first of the two surfaces is designated as the forward direction
 and the second is designated with the reverse direction. It is important to note
 that these surfaces senses may not be consistent with how an MC code determines
-the surface sense.
+the surface sense.  The surfaces are also expected to have a parent-child relationship to each of those volumes.
