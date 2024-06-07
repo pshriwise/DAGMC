@@ -59,6 +59,8 @@ geometries (on the order of 100 volumes) the process is rather quick.
 Grouping volumes and surfaces
 -----------------------------
 
+.. note:: Metadata assignment in this section applies to the UW DAGMC plugin, not the native DAGMC exporter provivded in Coreform Cubit (>= version 2023.8).
+
 A DAGMC-based analysis allows a number of attributes of the geometry to be
 defined within the geometry file. These characteristics generally relate to the
 physical behavior of the volume, for example its material definition or boundary
@@ -91,10 +93,39 @@ Due to the importance of using the ``group`` command reading the
 `CUBIT manual <CUBIT_manual_>`_
 section on its full usage is highly recommended.
 
+.. _coreform_metadata:
+
+Assinging Metadata to Volumes and Surfaces: Coreform Cubit
+----------------------------------------------------------
+
+
+Please refer to Coreform's `DAGMC Tutorial
+<https://coreform.com/products/coreform-cubit/tutorials/dagmc/tutorial_1/>`_ for
+more inform on how to apply DAGMC metadata for the integrated DAGMC export
+capability provided in Coreform Cubit (>= version 2023.8).
+
+.. _coreform_export:
+
+Production of the DAGMC Geometry: Coreform Native Export
+--------------------------------------------------------
+
+As of version 2023.8, Coreform Cubit has a native DAGMC export capability. This
+requires that the model is meshed either with the tetmesh or trimesh schemes
+(i.e. that surfaces of the model have triangles associated with them to be
+exported.) Faceting/meshing parameters are absent from this command as they are
+supplied to the meshing schemes mentioned previously. The export command is as
+follows:
+
+::
+
+    CUBIT> export cf_dagmc <filename> [overwrite]
+
+**This export option is also available as an export file format** `File -> Export... -> DAGMC (\*.h5m)`.
+
 .. _geom_production:
 
-Production of the DAGMC geometry
---------------------------------
+Production of the DAGMC geometry: DAGMC Plugin
+----------------------------------------------
 
 Now that the geometry is ready for DAGMC we must export it. Using the
 Cubit plugin make this very straightforward, assuming that the user has
