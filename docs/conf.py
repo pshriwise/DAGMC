@@ -78,7 +78,7 @@ autodoc_member_order = 'bysource'
 # a list of builtin the
 # mes.
 #
-html_basurl = 'localhost:8888'
+html_baseurl = 'localhost:8888'
 html_theme = 'sphinx_rtd_theme'
 html_logo = 'assets/logo_small.png'
 html_favicon = 'assets/favicon.png'
