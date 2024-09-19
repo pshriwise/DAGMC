@@ -1,16 +1,17 @@
-MCNP2CAD
+mcnp2cad
 ========
 
-UW has a tool, mcnp2cad_, which can import an MCNP model into Coreform Cubit.
-This capability is now shipped with Coreform Cubit as of version 2023.11.
+UW has a tool, mcnp2cad_, which can
+translate a MCNP model into ACIS format for use in future DAGMC simulations. The
+tool builds CAD solids from MCNP cell descriptions often turning infinite bodies
+and planes into finite versions. This tool has been integrated into Coreform Cubit,
+and can be executed under the `File -> Import...` menu option by selecting the `MCNP`
+file type.
 
-mcnp2cad_ builds CAD solids from MCNP cell descriptions, often turning infinite
-bodies and planes into finite versions. Please refer to `Coreform's MCNP
-importer documentation`_ for usage of this command
+.. figure:: assets/coreform_mcnp_import_screenshot.png
 
-Upon completion of the import, a CAD version of the MCNP input is created. If
-present, material and cell importance assignments are applied using Cubit group
-assignments, as described in :ref:`grouping-basics`.
+Executing this command will generate the MCNP model in the Coreform Cubit session
+with material and cell importance assignment metadata included for addition to the
+resulting DAGMC file upon export.
 
 ..  _mcnp2cad: https://github.com/svalinn/mcnp2cad
-..  _Coreform's MCNP importer documentation: https://coreform.com/cubit_help/cubithelp.htm#t=geometry%2Fimport%2Fimporting_mcnp_files.htm
