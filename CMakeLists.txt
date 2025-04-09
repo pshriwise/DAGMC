@@ -46,7 +46,7 @@ endif()
 
 # Dealing with MOAB
 if (PULL_INSTALL_MOAB)
-  set(MOAB_VERSION ${PULL_INSTALL_MOAB})  
+  set(MOAB_VERSION ${PULL_INSTALL_MOAB})
 
   # Ensure MOAB_VERSION
   if(NOT ${MOAB_VERSION} MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+")
@@ -58,6 +58,9 @@ if (PULL_INSTALL_MOAB)
   moab_pull_make(${MOAB_VERSION})
 else()
   find_package(MOAB REQUIRED)
+  if (NOT MOAB_USE_HDF5)
+    message(FATAL_ERROR "MOAB must be built with HDF5 to be used with DAGMC.")
+  endif()
 endif()
 
 find_package(OpenMP)
